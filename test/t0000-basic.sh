@@ -1,31 +1,22 @@
 #!/bin/sh
 
-test_description="Show basic features of Sharness"
+test_description="Show basic features of chapecron"
 
 . ./lib/sharness/sharness.sh
 
-test_expect_success "Success is reported like this" "
-    echo hello world | grep hello
-"
+CHAPECRON=../chapecron
 
-test_expect_success "Commands are chained this way" "
-    test x = 'x' &&
-    test 2 -gt 1 &&
-    echo success
-"
+test_expect_success "Output nothing on success" '
+    test -z $($CHAPECRON date)
+'
 
-return_42() {
-    echo "Will return soon"
-    return 42
-}
+test_expect_success "Output nothing on standard output on failure" '
+    test -z $(2>/dev/null $CHAPECRON date -w)
+'
 
-test_expect_success "You can test for a specific exit code" "
-    test_expect_code 42 return_42
-"
-
-test_expect_failure "We expect this to fail" "
-    test 1 = 2
-"
+test_expect_success "Output something on standard error output on failure" '
+    test -n $(1>/dev/null $CHAPECRON date -w)
+'
 
 test_done
 
