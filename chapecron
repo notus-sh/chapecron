@@ -1,8 +1,69 @@
 #!/bin/bash
 
-# Trace
-# Output a formatted execution report
-function trace {
+set -euo pipefail
+IFS=$'\n\t'
+
+
+COMMAND="$@"
+
+eval_command() {
+  eval $COMMAND
+}
+
+
+# Stack management
+declare -a STACK
+declare -i STACK_COUNTER=0
+
+stack::add() {
+    export STACK+=($@)
+}
+
+stack::next() {
+    local NEXT_COMMAND=${STACK[$STACK_COUNTER]}
+    export STACK_COUNTER+=1
+    $NEXT_COMMAND
+}
+
+stack::run() {
+    export STACK_COUNTER=0
+    stack::next
+}
+
+
+# Chapecron
+chapecron::mktmp() {
+    export TMP=$(mktemp -d)
+    export OUT=$TMP/cronic.out
+    export ERR=$TMP/cronic.err
+    export TRACE=$TMP/cronic.trace
+    
+    stack::next
+    
+    rm -rf "$TMP"
+}
+
+chapecron::run() {
+    set +e
+    stack::next >$OUT 2>$TRACE
+    RESULT=$?
+    set -e
+    
+    PATTERN="^${PS4:0:1}\\+${PS4:1}"
+    if grep -aq "$PATTERN" $TRACE
+    then
+        ! grep -av "$PATTERN" $TRACE > $ERR
+    else
+        ERR=$TRACE
+    fi
+    
+    if [ $RESULT -ne 0 -o -s "$ERR" ]
+    then
+        echo -e $(chapecron::trace $COMMAND)
+    fi
+}
+
+chapecron::trace() {
     echo "Cronic detected failure or error output for the command:"
     echo "$@"
     echo
@@ -21,29 +82,10 @@ function trace {
     fi
 }
 
-set -eu
 
-TMP=$(mktemp -d)
-OUT=$TMP/cronic.out
-ERR=$TMP/cronic.err
-TRACE=$TMP/cronic.trace
+# Build the middleware stack and run it
+stack::add chapecron::mktmp
+stack::add chapecron::run
+stack::add eval_command
 
-set +e
-"$@" >$OUT 2>$TRACE
-RESULT=$?
-set -e
-
-PATTERN="^${PS4:0:1}\\+${PS4:1}"
-if grep -aq "$PATTERN" $TRACE
-then
-    ! grep -av "$PATTERN" $TRACE > $ERR
-else
-    ERR=$TRACE
-fi
-
-if [ $RESULT -ne 0 -o -s "$ERR" ]
-then
-    echo -e $(trace "$@")
-fi
-
-rm -rf "$TMP"
+stack::run
