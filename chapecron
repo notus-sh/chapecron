@@ -33,14 +33,14 @@ stack::run() {
 
 # Chapecron
 chapecron::mktmp() {
-    export TMP=$(mktemp -d)
+    export TMP=$(mktemp -d 'chapecron.XXXXXXXXXX')
     export OUT=$TMP/cronic.out
     export ERR=$TMP/cronic.err
     export TRACE=$TMP/cronic.trace
     
-    stack::next
+    trap "{ rm -rf $TMP; }" EXIT
     
-    rm -rf "$TMP"
+    stack::next
 }
 
 chapecron::run() {
