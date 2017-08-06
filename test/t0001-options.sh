@@ -8,7 +8,7 @@ test_description="Options handling"
 DESC="Should fail of enhanced getopt is not available"
 shellmock_expect 'getopt' --status 2
 test_expect_success "$DESC" '
-	test_expect_code 1 $CHAPECRON
+	test_expect_code 65 $CHAPECRON
 '
 shellmock_clean
 
