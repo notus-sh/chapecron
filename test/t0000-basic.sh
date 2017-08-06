@@ -1,21 +1,19 @@
 #!/bin/sh
 
-test_description="Show basic features of chapecron"
+test_description="Basic features"
 
-. ./lib/sharness/sharness.sh
-
-CHAPECRON=../chapecron
+. ./setup.sh
 
 test_expect_success "Output nothing on success" '
-	test -z $($CHAPECRON date)
+	test -z "$($CHAPECRON date)"
 '
 
 test_expect_success "Output nothing on standard output on failure" '
-	test -z $(2>/dev/null $CHAPECRON date -w)
+	test -z "$(2>/dev/null $CHAPECRON date -w)"
 '
 
 test_expect_success "Output something on standard error output on failure" '
-	test -n $(1>/dev/null $CHAPECRON date -w)
+	test -n "$(2>&1 $CHAPECRON date -w)"
 '
 
 test_done
