@@ -3,13 +3,14 @@
 # Copyright (c) 2014 Christian Couder
 # MIT Licensed; see the LICENSE file in this repository.
 #
-# NOTE: run with TEST_VERBOSE=1 for verbose sharness tests.
+# NOTE: run with VERBOSE=1 for verbose sharness tests.
 
 T = $(sort $(wildcard t[0-9][0-9][0-9][0-9]-*.sh))
 LIBDIR = lib
 SHARNESSDIR = sharness
 AGGREGATE = $(LIBDIR)/$(SHARNESSDIR)/aggregate-results.sh
 
+: ${VERBOSE:=0}
 
 # Add below the binaries that this project generates or needs.
 # For example:
@@ -30,7 +31,7 @@ clean-test-results:
 
 $(T): clean-test-results deps
 	@echo "*** $@ ***"
-	./$@
+	@[ $(VERBOSE) ] && ./$@ --verbose || ./$@
 
 aggregate: clean-test-results $(T)
 	@echo "*** $@ ***"
@@ -39,11 +40,15 @@ aggregate: clean-test-results $(T)
 # Add below some needed dependencies.
 # For example:
 # deps: sharness $(BINS) curl
-deps: sharness $(BINS)
+deps: sharness shellmock $(BINS)
 
 sharness:
 	@echo "*** checking $@ ***"
 	lib/install-sharness.sh
+
+shellmock:
+	@echo "*** checking $@ ***"
+	lib/install-shellmock.sh
 
 # Add below other targets like:
 # - the targets needed to build binaries,

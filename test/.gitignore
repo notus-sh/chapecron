@@ -1,3 +1,8 @@
+# Libs
 lib/sharness/
+lib/shellmock/
+
+# Tempfiles
 test-results/
 trash directory.*.sh/
+tmpstubs/
