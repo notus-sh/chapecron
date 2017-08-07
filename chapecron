@@ -1,7 +1,15 @@
 #!/bin/bash
 
+# Environment variables
+: ${CHAPECRON_DEBUG:=0}
+: ${CHAPECRON_PATH_PREFIX:=}
+
+
+# Unofficial Bash strict mode
 set -euo pipefail
+[ $CHAPECRON_DEBUG = 1 ] && set -x
 IFS=$'\n\t'
+
 
 #
 # Exit statuses
@@ -9,7 +17,9 @@ IFS=$'\n\t'
 # C/C++ standards and not clash with reserved ones)
 #
 ERROR_MISSING_DEPENDENCY=65
-ERROR_UNSUPPORTED_OPTION=70
+ERROR_INVALID_ARGUMENTS=66
+ERROR_UNLOADABLE_CONFIG=70
+
 
 #
 # Command line arguments
@@ -20,25 +30,17 @@ declare -i VERBOSE=0
 declare -i HELP=0
 
 # Default options
-declare CONFIG_FILE
-
-
-CONFIG_DIR_SYS=/etc/chapecron/
-CONFIG_DIR_USR=$(([ -z ${XDG_CONFIG_HOME+x} ] || [ -z "$XDG_CONFIG_HOME" ]) \
-                  && echo "~/config" \
-                  || echo $XDG_CONFIG_HOME \
-                )"chapecron/"
-
+declare CONFIG_FILE=''
 
 
 #
 # Utilities
 #
 utils::log() {
-  [ $VERBOSE -le $1 ] || return
+  [ $VERBOSE -ge $1 ] || return 0
   
   local redirect=""
-  ([ "$3" = "stderr" ] || [ "$3" = "STDERR" ]) && redirect=" >&2"
+  [ $# -eq 3 ] && ([ "$3" == "stderr" ] || [ "$3" == "STDERR" ]) && redirect=" >&2"
   
 	eval "echo \"$2\"$redirect"
 }
@@ -63,6 +65,33 @@ utils::fail() {
 	exit $exit_code
 }
 
+#
+# Array functions
+#
+array::search() {
+  local needle=$1
+  local value
+  
+  shift
+  for value in $(echo $@); do
+    [ "$value" == "$needle" ] && return 0
+  done
+  return 1
+}
+
+array::merge() {
+  local merged=()
+  local v
+  
+  for v in $(echo $@ | tr " " "\n"); do
+    if ( ! array::search $v ${merged[@]} )
+    then
+      merged+=("$v")
+    fi
+  done
+  echo "${merged[@]}"
+}
+
 
 #
 # Dependency management
@@ -75,7 +104,12 @@ dependencies::getopt() {
   exit_code=$?
   set -e
   
-  [[ $exit_code -ne 4 ]] && return 1
+  [ $exit_code -ne 4 ] && return 1
+  return 0
+}
+
+dependencies::bash4() {
+  [ ${BASH_VERSINFO[0]} -lt 4 ] && return 1
   return 0
 }
 
@@ -83,6 +117,80 @@ dependencies::getopt() {
 #
 # Configuration
 #
+declare -A CONFIG
+declare -A CONFIG_MERGEABLE
+
+CONFIG_MERGEABLE+='plugins'
+
+# `$(eval echo "~$(whoami)")` seems to be an overly complicated way
+# to get $HOME but Sharness mess with $HOME
+CONFIG_HOME_USR=$(([ -z ${XDG_CONFIG_HOME+x} ] || [ -z "$XDG_CONFIG_HOME" ]) \
+                  && echo $(eval echo "~$(whoami)")/.config \
+                  || echo $XDG_CONFIG_HOME \
+                )
+
+CONFIG_DIR_SYS=/etc/chapecron/
+CONFIG_DIR_USR=${CONFIG_HOME_USR%/}/chapecron/
+
+config::defaults() {
+  CONFIG=( ["plugins"]="" )
+}
+
+config::loadfile() {
+  local _file=$1
+  local _conf=''
+  
+  [ -e $_file ] || \
+    utils::fail $ERROR_UNLOADABLE_CONFIG \
+                "Configuration file $_file does not exist"
+  
+  [ -r $_file ] || \
+    utils::fail $ERROR_UNLOADABLE_CONFIG \
+                "Configuration file $_file can not be read"
+  
+  utils::info "Loading configuration from file $_file"
+  
+  local _tmp=$(mktemp 'chapecron-config.XXXXXXXXXX')
+  
+  utils::debug "Temporary configuration file created as $_tmp"
+	if [ $CHAPECRON_DEBUG -eq 0 ]
+	then
+	  trap "{ rm $_tmp; }" EXIT
+	  utils::debug "Temporary configuration file set to be deleted after execution"
+	fi
+  
+  cat $_file | egrep -v '^$' | egrep -v '^#' > $_tmp
+  while IFS="=" read -r name value || [ -n "$name" ]; do
+    if (array::search "$name" ${CONFIG_MERGEABLE[@]:0})
+    then
+      CONFIG["$name"]=$(array::merge ${CONFIG["$name"]} "$value")
+    else
+      CONFIG["$name"]="$value"
+    fi
+  done < $_tmp
+}
+
+config::load() {
+  if [ -n "$CONFIG_FILE" ]
+  then
+    config::loadfile "$CONFIG_FILE"
+    return
+  fi
+  
+  local _config_files=(
+    ${CHAPECRON_PATH_PREFIX%/}${CONFIG_DIR_SYS%/}/chapecron.conf
+    ${CHAPECRON_PATH_PREFIX%/}${CONFIG_DIR_USR%/}/chapecron.conf
+  )
+  
+  for f in ${_config_files[@]}; do
+    utils::debug "Looking for a configuration file at $f"
+    if [ -e $f ]
+    then
+      utils::info "Configuration file found: $f"
+      config::loadfile $f
+    fi
+  done
+}
 
 
 #
@@ -104,6 +212,7 @@ stack::next() {
 stack::run() {
 	STACK_COUNTER=0
 	stack::next
+	return $?
 }
 
 
@@ -138,9 +247,15 @@ chapecron::mktmp() {
 	export ERR=$TMP/cronic.err
 	export TRACE=$TMP/cronic.trace
 	
-	trap "{ rm -rf $TMP; }" EXIT
+	utils::debug "Output files created in $TMP"
+	if [ $CHAPECRON_DEBUG -eq 0 ]
+	then
+	  trap "{ rm -rf $TMP; }" EXIT
+	  utils::debug "Output files set to be deleted after execution"
+	fi
 	
 	stack::next
+	return $?
 }
 
 chapecron::run() {
@@ -157,17 +272,25 @@ chapecron::run() {
 		ERR=$TRACE
 	fi
 	
-	if [ $RESULT -ne 0 -o -s "$ERR" ]
+	if ([ $RESULT -ne 0 ] || [ -s "$ERR" ])
 	then
 		echo -e $(output::trace $COMMAND)
 	fi
+	
+	return $RESULT
 }
 
 
 #
 # Here we go!
 #
-dependencies::getopt || utils::fail $ERROR_MISSING_DEPENDENCY "Missing dependency: enhanced getopt"
+dependencies::getopt || \
+  utils::fail $ERROR_MISSING_DEPENDENCY \
+              "Missing dependency: enhanced getopt"
+              
+dependencies::bash4  || \
+  utils::fail $ERROR_MISSING_DEPENDENCY \
+              "Missing dependency: bash 4.0+"
 
 # Options
 SHORT_OPTIONS=hvc:
@@ -176,11 +299,12 @@ LONG_OPTIONS=help,verbose,config:
 self::usage() {
 	cat <<-USAGE
 		chapecron: look after your crons while you are away
-		Usage: $0 [-v,--verbose] [-h,--help] [--] COMMAND
+		Usage: $0 [-v,--verbose] [-h,--help] -- COMMAND
 		Options:
 		  -c,--config   Specify a configuration file (See below)
 		  -h,--help     Print this help and exit
-		  -v,--verbose  More verbose output
+		  -v,--verbose  More verbose output.
+		                You can specify this option more than once
 		
 		By default, chapecron will look for configuration files at:
 		
@@ -202,7 +326,7 @@ while :; do
 			shift 2
 			;;
 		-v|--verbose)
-			VERBOSE=1
+			VERBOSE+=1
 			shift
 			;;
 		-h|--help)
@@ -214,7 +338,8 @@ while :; do
 			break
 			;;
 		*)
-		  utils::fail $ERROR_UNSUPPORTED_OPTION "Unsupported option $1. Use $0 -h to get help"
+		  utils::fail $ERROR_INVALID_ARGUMENTS \
+		              "Unsupported option $1. Use $0 -h to get help"
 			;;
 	esac
 done
@@ -222,15 +347,34 @@ done
 COMMAND="$@"
 
 
-[[ $HELP = 1 ]] && self::usage && exit 0
-[[ $VERBOSE = 1 ]] && echo "verbose: $VERBOSE, help: $HELP, command: $COMMAND"
+[ $HELP -eq 1 ] && self::usage && exit 0
 
+
+[ -z "$COMMAND" ] && \
+  utils::fail $ERROR_INVALID_ARGUMENTS \
+              "No command to look after. Use $0 -h to get help"
+
+
+utils::info  "Command to be monitored: $COMMAND"
+
+utils::debug "Command line options detected:"
+utils::debug "config file: ${CONFIG_FILE:-undefined}"
+utils::debug "verbose: $VERBOSE"
+
+config::defaults
+config::load
+
+utils::debug "-- Configuration loaded --"
+for key in "${!CONFIG[@]}"; do
+  utils::debug "$key = ${CONFIG[$key]}"
+done
+utils::debug "-- Configuration ends --"
 
 
 eval_command() {
   eval $COMMAND
+	return $?
 }
-
 
 # Build the middleware stack and run it
 stack::add chapecron::mktmp
@@ -238,3 +382,6 @@ stack::add chapecron::run
 stack::add eval_command
 
 stack::run
+
+exit $?
+
