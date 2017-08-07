@@ -73,7 +73,7 @@ array::search() {
   local value
   
   shift
-  for value in $(echo $@); do
+  for value in $(echo $@ | tr " " "\\n"); do
     [ "$value" == "$needle" ] && return 0
   done
   return 1
@@ -83,7 +83,7 @@ array::merge() {
   local merged=()
   local v
   
-  for v in $(echo $@ | tr " " "\n"); do
+  for v in $(echo $@ | tr " " "\\n"); do
     if ( ! array::search $v ${merged[@]} )
     then
       merged+=("$v")
@@ -118,15 +118,15 @@ dependencies::bash4() {
 # Configuration
 #
 declare -A CONFIG
-declare -A CONFIG_MERGEABLE
+declare -a CONFIG_MERGEABLE
 
-CONFIG_MERGEABLE+='plugins'
+CONFIG_MERGEABLE+=('plugins')
 
 # `$(eval echo "~$(whoami)")` seems to be an overly complicated way
 # to get $HOME but Sharness mess with $HOME
-CONFIG_HOME_USR=$(([ -z ${XDG_CONFIG_HOME+x} ] || [ -z "$XDG_CONFIG_HOME" ]) \
-                  && echo $(eval echo "~$(whoami)")/.config \
-                  || echo $XDG_CONFIG_HOME \
+CONFIG_HOME_USR=$(   ([ -z ${XDG_CONFIG_HOME+x} ] || [ -z "$XDG_CONFIG_HOME" ]) \
+                  && echo "$(eval echo "~$(whoami)")/.config" \
+                  || echo "$XDG_CONFIG_HOME" \
                 )
 
 CONFIG_DIR_SYS=/etc/chapecron/
@@ -138,36 +138,36 @@ config::defaults() {
 
 config::loadfile() {
   local _file=$1
-  local _conf=''
+  local _tmp
   
-  [ -e $_file ] || \
+  [ -e "$_file" ] || \
     utils::fail $ERROR_UNLOADABLE_CONFIG \
                 "Configuration file $_file does not exist"
   
-  [ -r $_file ] || \
+  [ -r "$_file" ] || \
     utils::fail $ERROR_UNLOADABLE_CONFIG \
                 "Configuration file $_file can not be read"
   
   utils::info "Loading configuration from file $_file"
   
-  local _tmp=$(mktemp 'chapecron-config.XXXXXXXXXX')
   
+  _tmp=$(mktemp 'chapecron-config.XXXXXXXXXX')
   utils::debug "Temporary configuration file created as $_tmp"
 	if [ $CHAPECRON_DEBUG -eq 0 ]
 	then
-	  trap "{ rm $_tmp; }" EXIT
+	  trap "{ rm \"$_tmp\"; }" EXIT
 	  utils::debug "Temporary configuration file set to be deleted after execution"
 	fi
   
-  cat $_file | egrep -v '^$' | egrep -v '^#' > $_tmp
+  grep -vE '^$' "$_file" | grep -vE '^#' > "$_tmp"
   while IFS="=" read -r name value || [ -n "$name" ]; do
-    if (array::search "$name" ${CONFIG_MERGEABLE[@]:0})
+    if (array::search "$name" "${CONFIG_MERGEABLE[@]}")
     then
-      CONFIG["$name"]=$(array::merge ${CONFIG["$name"]} "$value")
+      CONFIG["$name"]=$(array::merge "${CONFIG["$name"]}" "$value")
     else
       CONFIG["$name"]="$value"
     fi
-  done < $_tmp
+  done < "$_tmp"
 }
 
 config::load() {
@@ -178,16 +178,16 @@ config::load() {
   fi
   
   local _config_files=(
-    ${CHAPECRON_PATH_PREFIX%/}${CONFIG_DIR_SYS%/}/chapecron.conf
-    ${CHAPECRON_PATH_PREFIX%/}${CONFIG_DIR_USR%/}/chapecron.conf
+    "${CHAPECRON_PATH_PREFIX%/}${CONFIG_DIR_SYS%/}/chapecron.conf"
+    "${CHAPECRON_PATH_PREFIX%/}${CONFIG_DIR_USR%/}/chapecron.conf"
   )
   
-  for f in ${_config_files[@]}; do
+  for f in "${_config_files[@]}"; do
     utils::debug "Looking for a configuration file at $f"
-    if [ -e $f ]
+    if [ -e "$f" ]
     then
       utils::info "Configuration file found: $f"
-      config::loadfile $f
+      config::loadfile "$f"
     fi
   done
 }
@@ -200,7 +200,7 @@ declare -a STACK
 declare -i STACK_COUNTER=0
 
 stack::add() {
-	STACK+=($@)
+	STACK+=("$@")
 }
 
 stack::next() {
@@ -230,7 +230,7 @@ output::trace() {
 	echo
 	echo "STANDARD OUTPUT:"
 	cat "$OUT"
-	if [ $TRACE != $ERR ]
+	if [ "$TRACE" != "$ERR" ]
 	then
 		echo
 		echo "TRACE-ERROR OUTPUT:"
@@ -242,15 +242,22 @@ output::trace() {
 # Chapecron own middlewares
 #
 chapecron::mktmp() {
-	export TMP=$(mktemp -d 'chapecron.XXXXXXXXXX')
-	export OUT=$TMP/cronic.out
-	export ERR=$TMP/cronic.err
-	export TRACE=$TMP/cronic.trace
+	local TMP
+	local OUT
+	local ERR
+	local TRACE
+	
+	TMP=$(mktemp -d 'chapecron.XXXXXXXXXX')
+	OUT=$TMP/cronic.out
+	ERR=$TMP/cronic.err
+	TRACE=$TMP/cronic.trace
+	
+	export OUT ERR TRACE
 	
 	utils::debug "Output files created in $TMP"
 	if [ $CHAPECRON_DEBUG -eq 0 ]
 	then
-	  trap "{ rm -rf $TMP; }" EXIT
+	  trap "{ rm -rf \"$TMP\"; }" EXIT
 	  utils::debug "Output files set to be deleted after execution"
 	fi
 	
@@ -260,21 +267,21 @@ chapecron::mktmp() {
 
 chapecron::run() {
 	set +e
-	stack::next >$OUT 2>$TRACE
+	stack::next >"$OUT" 2>"$TRACE"
 	RESULT=$?
 	set -e
 	
 	PATTERN="^${PS4:0:1}\\+${PS4:1}"
-	if grep -aq "$PATTERN" $TRACE
+	if grep -aq "$PATTERN" "$TRACE"
 	then
-		! grep -av "$PATTERN" $TRACE > $ERR
+		! grep -av "$PATTERN" "$TRACE" > "$ERR"
 	else
 		ERR=$TRACE
 	fi
 	
 	if ([ $RESULT -ne 0 ] || [ -s "$ERR" ])
 	then
-		echo -e $(output::trace $COMMAND)
+		echo -e "$(output::trace "$COMMAND")"
 	fi
 	
 	return $RESULT
@@ -344,7 +351,7 @@ while :; do
 	esac
 done
 
-COMMAND="$@"
+COMMAND="$*"
 
 
 [ $HELP -eq 1 ] && self::usage && exit 0
@@ -372,7 +379,7 @@ utils::debug "-- Configuration ends --"
 
 
 eval_command() {
-  eval $COMMAND
+  eval "$COMMAND"
 	return $?
 }
 
