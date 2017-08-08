@@ -1,6 +1,5 @@
-# Libs
-lib/sharness/
-lib/shellmock/
+# Dependencies
+lib/
 
 # Tempfiles
 test-results/

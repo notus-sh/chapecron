@@ -1,72 +1,43 @@
 # Run sharness tests
 #
-# Copyright (c) 2014 Christian Couder
-# MIT Licensed; see the LICENSE file in this repository.
-#
-# NOTE: run with VERBOSE=1 for verbose sharness tests.
-
-T = $(sort $(wildcard t[0-9][0-9][0-9][0-9]-*.sh))
-LIBDIR = lib
-SHARNESSDIR = sharness
-AGGREGATE = $(LIBDIR)/$(SHARNESSDIR)/aggregate-results.sh
+# NOTE: Run with VERBOSE=1 for verbose tests.
 
 : ${VERBOSE:=0}
 
-# Add below the binaries that this project generates or needs.
-# For example:
-# BINS = bin/ipfs
-BINS =
+# Test dependencies
+SHARNESS_REPOSITORY   = https://github.com/chriscool/sharness.git
+SHARNESS_REVISION     = e94c6bbb04e8772eb9dd587aee3b721c9b01d282
+
+SHELLMOCK_REPOSITORY  = https://github.com/capitalone/bash_shell_mock.git
+SHELLMOCK_REVISION    = 8fd1b4b21e5f3f323b1664f658dc7e085095adb8
+
+
+TEST_SUITE = $(sort $(wildcard t[0-9][0-9][0-9][0-9]-*.sh))
+
 
 all: aggregate
 
-clean: clean-test-results
+aggregate: clean-test-results $(TEST_SUITE)
 	@echo "*** $@ ***"
-	# Clean binaries below.
-	# For example:
-	# -rm -rf bin/ipfs
+	ls test-results/t*-*.sh.*.counts | lib/sharness/aggregate-results.sh
+
+$(TEST_SUITE): clean-test-results deps
+	@echo "*** $@ ***"
+	@[ $(VERBOSE) ] && ./$@ --verbose || ./$@
 
 clean-test-results:
 	@echo "*** $@ ***"
 	-rm -rf test-results
 
-$(T): clean-test-results deps
-	@echo "*** $@ ***"
-	@[ $(VERBOSE) ] && ./$@ --verbose || ./$@
-
-aggregate: clean-test-results $(T)
-	@echo "*** $@ ***"
-	ls test-results/t*-*.sh.*.counts | $(AGGREGATE)
-
-# Add below some needed dependencies.
-# For example:
-# deps: sharness $(BINS) curl
-deps: sharness shellmock $(BINS)
+deps: sharness shellmock
 
 sharness:
 	@echo "*** checking $@ ***"
-	lib/install-sharness.sh
+	./install-dep.sh sharness $(SHARNESS_REPOSITORY) $(SHARNESS_REVISION)
 
 shellmock:
 	@echo "*** checking $@ ***"
-	lib/install-shellmock.sh
+	./install-dep.sh shellmock $(SHELLMOCK_REPOSITORY) $(SHELLMOCK_REVISION)
 
-# Add below other targets like:
-# - the targets needed to build binaries,
-# - targets using special compile flags,
-# - targets to check or install dependencies.
-#
-# For example:
-#
-# GOFLAGS =
-#
-# bin/%: FORCE
-# 	cd .. && make GOFLAGS=$(GOFLAGS) $@
-#
-# race:
-# 	make GOFLAGS=-race all
-#
-# curl:
-#	@which curl >/dev/null || (echo "Please install curl!" && false)
-
-.PHONY: all clean clean-test-results $(T) aggregate deps sharness FORCE
+.PHONY: all clean-test-results $(TEST_SUITE) aggregate deps sharness shellmock
 
