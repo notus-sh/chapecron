@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/env bash
 
 test_description="Basic features"
 
@@ -18,4 +18,3 @@ test_expect_success "Output something on standard error output on failure" '
 
 test_done
 
-# vi: set ft=sh :

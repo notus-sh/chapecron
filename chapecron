@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 
 # Environment variables
 : ${CHAPECRON_DEBUG:=0}
@@ -37,11 +37,11 @@ declare CONFIG_FILE=''
 # Utilities
 #
 utils::log() {
-  [ $VERBOSE -ge $1 ] || return 0
-  
-  local redirect=""
-  [ $# -eq 3 ] && ([ "$3" == "stderr" ] || [ "$3" == "STDERR" ]) && redirect=" >&2"
-  
+	[ $VERBOSE -ge $1 ] || return 0
+
+	local redirect=""
+	[ $# -eq 3 ] && ([ "$3" == "stderr" ] || [ "$3" == "STDERR" ]) && redirect=" >&2"
+
 	eval "echo \"$2\"$redirect"
 }
 
@@ -58,9 +58,9 @@ utils::debug() {
 }
 
 utils::fail() {
-  local exit_code=$1
-  shift
-  
+	local exit_code=$1
+	shift
+
 	[ $# -gt 0 ] && utils::error "$@"
 	exit $exit_code
 }
@@ -69,26 +69,25 @@ utils::fail() {
 # Array functions
 #
 array::search() {
-  local needle=$1
-  local value
-  
-  shift
-  for value in $(echo $@ | tr " " "\\n"); do
-    [ "$value" == "$needle" ] && return 0
-  done
-  return 1
+	local needle=$1
+	local value
+
+	shift
+	for value in $(echo $@ | tr " " "\\n"); do
+		[ "$value" == "$needle" ] && return 0
+	done
+	return 1
 }
 
 array::merge() {
-  local merged=()
-  local v
-  
-  for v in $(echo $@ | tr " " "\\n"); do
-    if ( ! array::search $v ${merged[@]} )
-    then
-      merged+=("$v")
-    fi
-  done
+	local merged=()
+	local v
+
+	for v in $(echo $@ | tr " " "\\n"); do
+		if ( ! array::search $v ${merged[@]} ); then
+			merged+=("$v")
+		fi
+	done
   echo "${merged[@]}"
 }
 
@@ -97,20 +96,20 @@ array::merge() {
 # Dependency management
 #
 dependencies::getopt() {
-  local exit_code
-  
-  set +e
-  getopt --test > /dev/null
-  exit_code=$?
-  set -e
-  
-  [ $exit_code -ne 4 ] && return 1
-  return 0
+	local exit_code
+
+	set +e
+	getopt --test > /dev/null
+	exit_code=$?
+	set -e
+
+	[ $exit_code -ne 4 ] && return 1
+	return 0
 }
 
 dependencies::bash4() {
-  [ ${BASH_VERSINFO[0]} -lt 4 ] && return 1
-  return 0
+	[ ${BASH_VERSINFO[0]} -lt 4 ] && return 1
+	return 0
 }
 
 
@@ -125,71 +124,67 @@ CONFIG_MERGEABLE+=('plugins')
 # `$(eval echo "~$(whoami)")` seems to be an overly complicated way
 # to get $HOME but Sharness mess with $HOME
 CONFIG_HOME_USR=$(   ([ -z ${XDG_CONFIG_HOME+x} ] || [ -z "$XDG_CONFIG_HOME" ]) \
-                  && echo "$(eval echo "~$(whoami)")/.config" \
-                  || echo "$XDG_CONFIG_HOME" \
-                )
+									&& echo "$(eval echo "~$(whoami)")/.config" \
+									|| echo "$XDG_CONFIG_HOME" \
+								)
 
 CONFIG_DIR_SYS=/etc/chapecron/
 CONFIG_DIR_USR=${CONFIG_HOME_USR%/}/chapecron/
 
 config::defaults() {
-  CONFIG=( ["plugins"]="" )
+	CONFIG=( ["plugins"]="" )
 }
 
 config::loadfile() {
-  local _file=$1
-  local _tmp
-  
-  [ -e "$_file" ] || \
-    utils::fail $ERROR_UNLOADABLE_CONFIG \
-                "Configuration file $_file does not exist"
-  
-  [ -r "$_file" ] || \
-    utils::fail $ERROR_UNLOADABLE_CONFIG \
-                "Configuration file $_file can not be read"
-  
-  utils::info "Loading configuration from file $_file"
-  
-  
-  _tmp=$(mktemp 'chapecron-config.XXXXXXXXXX')
-  utils::debug "Temporary configuration file created as $_tmp"
-	if [ $CHAPECRON_DEBUG -eq 0 ]
-	then
-	  trap "{ rm \"$_tmp\"; }" EXIT
-	  utils::debug "Temporary configuration file set to be deleted after execution"
+	local _file=$1
+	local _tmp
+
+	[ -e "$_file" ] || \
+		utils::fail $ERROR_UNLOADABLE_CONFIG \
+								"Configuration file $_file does not exist"
+
+	[ -r "$_file" ] || \
+		utils::fail $ERROR_UNLOADABLE_CONFIG \
+								"Configuration file $_file can not be read"
+
+	utils::info "Loading configuration from file $_file"
+
+
+	_tmp=$(mktemp 'chapecron-config.XXXXXXXXXX')
+	utils::debug "Temporary configuration file created as $_tmp"
+	if [ $CHAPECRON_DEBUG -eq 0 ]; then
+		trap "{ rm \"$_tmp\"; }" EXIT
+		utils::debug "Temporary configuration file set to be deleted after execution"
 	fi
-  
-  grep -vE '^$' "$_file" | grep -vE '^#' > "$_tmp"
-  while IFS="=" read -r name value || [ -n "$name" ]; do
-    if (array::search "$name" "${CONFIG_MERGEABLE[@]}")
-    then
-      CONFIG["$name"]=$(array::merge "${CONFIG["$name"]}" "$value")
-    else
-      CONFIG["$name"]="$value"
-    fi
-  done < "$_tmp"
+
+	grep -vE '^$' "$_file" | grep -vE '^#' > "$_tmp"
+	while IFS="=" read -r name value || [ -n "$name" ]; do
+		if (array::search "$name" "${CONFIG_MERGEABLE[@]}"); then
+			CONFIG["$name"]=$(array::merge "${CONFIG["$name"]}" "$value")
+		else
+			CONFIG["$name"]="$value"
+		fi
+	done < "$_tmp"
 }
 
 config::load() {
-  if [ -n "$CONFIG_FILE" ]
-  then
-    config::loadfile "$CONFIG_FILE"
-    return
-  fi
-  
-  local _config_files=(
-    "${CHAPECRON_PATH_PREFIX%/}${CONFIG_DIR_SYS%/}/chapecron.conf"
-    "${CHAPECRON_PATH_PREFIX%/}${CONFIG_DIR_USR%/}/chapecron.conf"
-  )
-  
-  for f in "${_config_files[@]}"; do
-    utils::debug "Looking for a configuration file at $f"
-    if [ -e "$f" ]
-    then
-      utils::info "Configuration file found: $f"
-      config::loadfile "$f"
-    fi
-  done
+	if [ -n "$CONFIG_FILE" ]; then
+		config::loadfile "$CONFIG_FILE"
+		return
+	fi
+
+	local _config_files=(
+		"${CHAPECRON_PATH_PREFIX%/}${CONFIG_DIR_SYS%/}/chapecron.conf"
+		"${CHAPECRON_PATH_PREFIX%/}${CONFIG_DIR_USR%/}/chapecron.conf"
+	)
+
+	for f in "${_config_files[@]}"; do
+		utils::debug "Looking for a configuration file at $f"
+		if [ -e "$f" ]; then
+			utils::info "Configuration file found: $f"
+			config::loadfile "$f"
+		fi
+	done
 }
 
 
@@ -230,8 +225,7 @@ output::trace() {
 	echo
 	echo "STANDARD OUTPUT:"
 	cat "$OUT"
-	if [ "$TRACE" != "$ERR" ]
-	then
+	if [ "$TRACE" != "$ERR" ]; then
 		echo
 		echo "TRACE-ERROR OUTPUT:"
 		cat "$TRACE"
@@ -246,21 +240,20 @@ chapecron::mktmp() {
 	local OUT
 	local ERR
 	local TRACE
-	
+
 	TMP=$(mktemp -d 'chapecron.XXXXXXXXXX')
 	OUT=$TMP/cronic.out
 	ERR=$TMP/cronic.err
 	TRACE=$TMP/cronic.trace
-	
+
 	export OUT ERR TRACE
-	
+
 	utils::debug "Output files created in $TMP"
-	if [ $CHAPECRON_DEBUG -eq 0 ]
-	then
-	  trap "{ rm -rf \"$TMP\"; }" EXIT
-	  utils::debug "Output files set to be deleted after execution"
+	if [ $CHAPECRON_DEBUG -eq 0 ]; then
+		trap "{ rm -rf \"$TMP\"; }" EXIT
+		utils::debug "Output files set to be deleted after execution"
 	fi
-	
+
 	stack::next
 	return $?
 }
@@ -270,20 +263,18 @@ chapecron::run() {
 	stack::next >"$OUT" 2>"$TRACE"
 	RESULT=$?
 	set -e
-	
+
 	PATTERN="^${PS4:0:1}\\+${PS4:1}"
-	if grep -aq "$PATTERN" "$TRACE"
-	then
+	if grep -aq "$PATTERN" "$TRACE"; then
 		! grep -av "$PATTERN" "$TRACE" > "$ERR"
 	else
 		ERR=$TRACE
 	fi
-	
-	if ([ $RESULT -ne 0 ] || [ -s "$ERR" ])
-	then
+
+	if ([ $RESULT -ne 0 ] || [ -s "$ERR" ]); then
 		echo -e "$(output::trace "$COMMAND")"
 	fi
-	
+
 	return $RESULT
 }
 
@@ -292,12 +283,12 @@ chapecron::run() {
 # Here we go!
 #
 dependencies::getopt || \
-  utils::fail $ERROR_MISSING_DEPENDENCY \
-              "Missing dependency: enhanced getopt"
+	utils::fail $ERROR_MISSING_DEPENDENCY \
+							"Missing dependency: enhanced getopt"
               
 dependencies::bash4  || \
-  utils::fail $ERROR_MISSING_DEPENDENCY \
-              "Missing dependency: bash 4.0+"
+	utils::fail $ERROR_MISSING_DEPENDENCY \
+							"Missing dependency: bash 4.0+"
 
 # Options
 SHORT_OPTIONS=hvc:
@@ -324,7 +315,10 @@ self::usage() {
 	USAGE
 }
 
-PARSED=$(getopt --options=$SHORT_OPTIONS --longoptions=$LONG_OPTIONS --name "$0" -- "$@")
+PARSED=$(getopt --options=$SHORT_OPTIONS \
+								--longoptions=$LONG_OPTIONS \
+								--name "$0" \
+								-- "$@")
 eval set -- "$PARSED"
 while :; do
 	case "$1" in
@@ -345,8 +339,8 @@ while :; do
 			break
 			;;
 		*)
-		  utils::fail $ERROR_INVALID_ARGUMENTS \
-		              "Unsupported option $1. Use $0 -h to get help"
+			utils::fail $ERROR_INVALID_ARGUMENTS \
+									"Unsupported option $1. Use $0 -h to get help"
 			;;
 	esac
 done
@@ -358,8 +352,8 @@ COMMAND="$*"
 
 
 [ -z "$COMMAND" ] && \
-  utils::fail $ERROR_INVALID_ARGUMENTS \
-              "No command to look after. Use $0 -h to get help"
+	utils::fail $ERROR_INVALID_ARGUMENTS \
+							"No command to look after. Use $0 -h to get help"
 
 
 utils::info  "Command to be monitored: $COMMAND"
@@ -373,13 +367,13 @@ config::load
 
 utils::debug "-- Configuration loaded --"
 for key in "${!CONFIG[@]}"; do
-  utils::debug "$key = ${CONFIG[$key]}"
+	utils::debug "$key = ${CONFIG[$key]}"
 done
 utils::debug "-- Configuration ends --"
 
 
 eval_command() {
-  eval "$COMMAND"
+	eval "$COMMAND"
 	return $?
 }
 

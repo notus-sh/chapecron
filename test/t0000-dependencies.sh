@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/env bash
 
 test_description="Check dependencies"
 
@@ -20,4 +20,3 @@ test_expect_failure "$DESC" '
 
 test_done
 
-# vi: set ft=sh :
