@@ -10,7 +10,7 @@ test_expect_success "$DESC" '
 	local -r test_root="$SHARNESS_TRASH_DIRECTORY"
 	local -r test_config="$test_root/chapecron.conf.not-exists"
 
-	test_expect_code 70 "$CHAPECRON" -c "$test_config" -- date 2>/dev/null
+	test_expect_code 72 "$CHAPECRON" -c "$test_config" -- date 2>/dev/null
 '
 
 
@@ -22,7 +22,7 @@ test_expect_success "$DESC" '
 	cp "$TEST_HOME/data/chapecron-usr.conf" "$test_config"
 	chmod u-r "$test_config"
 
-	test_expect_code 70 "$CHAPECRON" -c "$test_config" -- date 2>/dev/null
+	test_expect_code 72 "$CHAPECRON" -c "$test_config" -- date 2>/dev/null
 '
 
 

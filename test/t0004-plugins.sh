@@ -27,7 +27,7 @@ test_expect_success "$DESC" '
 
 	cp "$TEST_HOME/data/chapecron-plugins-wrong.conf" "$test_config"
 
-	test_expect_code 72 "$CHAPECRON" -c "$test_config" -- date 2>/dev/null
+	test_expect_code 78 "$CHAPECRON" -c "$test_config" -- date 2>/dev/null
 '
 
 

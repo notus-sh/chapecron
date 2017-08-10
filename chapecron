@@ -18,13 +18,12 @@ IFS=$'\n\t'
 ##
 
 ## Exit statuses
-# Exit code should be narrowed to the range 64-113 to match C/C++ standards
-# and not clash with reserved ones
-declare -r ERROR_MISSING_DEPENDENCY=65
-declare -r ERROR_INVALID_ARGUMENTS=66
-declare -r ERROR_UNLOADABLE_CONFIG=70
-declare -r ERROR_UNLOADABLE_PLUGIN=71
-declare -r ERROR_UNKNOWN_PLUGIN=72
+# See https://goo.gl/6uEMX3 for full reference
+declare -r EX_USAGE=64					# Command used incorrectly
+declare -r EX_UNAVAILABLE=69		# Unavailable dependency
+declare -r EX_OSFILE=72					# Configuration file missing or wrong
+declare -r EX_NOPERM=77					# Insufficient permissions
+declare -r EX_CONFIG=78					# Missing or wrong configuration
 
 ## Command line arguments
 declare COMMAND=''
@@ -117,11 +116,11 @@ dependencies::bash4() {
 
 dependencies::all() {
 	dependencies::getopt || \
-		utils::fail $ERROR_MISSING_DEPENDENCY \
+		utils::fail $EX_UNAVAILABLE \
 								"Missing dependency: enhanced getopt"
 		            
 	dependencies::bash4  || \
-		utils::fail $ERROR_MISSING_DEPENDENCY \
+		utils::fail $EX_UNAVAILABLE \
 								"Missing dependency: bash 4.0+"
 }
 
@@ -178,7 +177,7 @@ options::get() {
 				break
 				;;
 			*)
-				utils::fail $ERROR_INVALID_ARGUMENTS \
+				utils::fail $EX_USAGE \
 										"Unsupported option $1. Use $0 -h to get help"
 				;;
 		esac
@@ -189,7 +188,7 @@ options::get() {
 	[ $HELP -eq 1 ] && options::usage && exit 0
 	
 	[ -z "$COMMAND" ] && \
-		utils::fail $ERROR_INVALID_ARGUMENTS \
+		utils::fail $EX_USAGE \
 								"No command to look after. Use $0 -h to get help"
 	
 	eval "$(printf 'chapecron::command() { %s; return $?; }' $COMMAND)"
@@ -237,11 +236,11 @@ config::loadfile() {
 	local to_load=$1 tmp_conf name value
 
 	[ -e "$to_load" ] || \
-		utils::fail $ERROR_UNLOADABLE_CONFIG \
+		utils::fail $EX_OSFILE \
 								"Configuration file $to_load does not exist"
 
 	[ -r "$to_load" ] || \
-		utils::fail $ERROR_UNLOADABLE_CONFIG \
+		utils::fail $EX_OSFILE \
 								"Configuration file $to_load can not be read"
 
 	utils::info "Loading configuration from file $to_load"
@@ -303,12 +302,8 @@ plugins::load() {
 	functions=$(declare -F | cut -d ' ' -f3)
 	
 	for plugin in "$PLUGINS_DIR"/*.sh; do
-		[ -e "$plugin" ] || \
-			utils::fail $ERROR_UNLOADABLE_PLUGIN \
-									"Plugin $plugin does not exist"
-		
 		[ -r "$plugin" ] || \
-			utils::fail $ERROR_UNLOADABLE_PLUGIN \
+			utils::fail $EX_NOPERM \
 									"Plugin $plugin can not be read"
 	
 		utils::debug "Loading plugin from $plugin"
@@ -354,7 +349,7 @@ stack::build() {
 	if [ -n "${CONFIG['plugins']}" ]; then
 		for plugin in $(echo "${CONFIG['plugins']}" | tr " " "\\n"); do
 			if ( ! array::search "$plugin" "${PLUGINS_AVAILABLE[@]}"); then
-				utils::fail $ERROR_UNKNOWN_PLUGIN "Unknown plugin: $plugin"
+				utils::fail $EX_CONFIG "Unknown plugin: $plugin"
 			fi
 			
 			stack::add "$plugin"
