@@ -14,8 +14,8 @@ shellmock_clean
 
 
 DESC="Fail if bash 4.0+ is not available"
-test_expect_failure "$DESC" '
-	BASH_VERSINFO=(3) test_expect_code 65 $CHAPECRON
+test_expect_success "$DESC" '
+	CHAPECRON_BASH_VERSION=3 test_expect_code 65 $CHAPECRON
 '
 
 test_done
