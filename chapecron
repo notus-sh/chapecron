@@ -2,8 +2,9 @@
 
 # Environment variables
 : ${CHAPECRON_DEBUG:=0}
+# These three ones exists only for tests purpose
 : ${CHAPECRON_PATH_PREFIX:=}
-
+: ${CHAPECRON_PLUGIN_PATTERN:='/*.sh'}
 : ${CHAPECRON_BASH_VERSION:=${BASH_VERSINFO[0]}}
 
 
@@ -298,11 +299,18 @@ declare -r PLUGINS_DIR="$(dirname $(realpath $0))/plugins.d"
 
 
 plugins::load() {
-	local plugin f functions
+	local plugin plugin_realpath f functions
 
 	functions=$(declare -F | cut -d ' ' -f3)
 
-	for plugin in "$PLUGINS_DIR"/*.sh; do
+	for plugin in "$PLUGINS_DIR"$CHAPECRON_PLUGIN_PATTERN; do
+
+		plugin_realpath="$(realpath "$plugin")"
+		if (! echo $plugin_realpath | grep "^$PLUGINS_DIR" > /dev/null); then
+			utils::fail $EX_USAGE \
+									"Plugins can not be loaded from outside of $PLUGINS_DIR"
+		fi
+
 		[ -r "$plugin" ] || \
 			utils::fail $EX_NOPERM \
 									"Plugin $plugin can not be read"
