@@ -19,7 +19,7 @@ test_expect_success "$DESC" '
 	local -r test_root="$SHARNESS_TRASH_DIRECTORY"
 	local -r test_config="$test_root/chapecron.conf.not-unreadable"
 
-	cp "$TEST_HOME/data/chapecron-usr.conf" "$test_config"
+	touch "$test_config"
 	chmod u-r "$test_config"
 
 	test_expect_code 72 "$CHAPECRON" -c "$test_config" -- date 2>/dev/null
@@ -31,7 +31,7 @@ test_expect_success "$DESC" '
 	local -r test_root="$SHARNESS_TRASH_DIRECTORY"
 	local -r test_config="$test_root/chapecron.conf.readable"
 
-	cp "$TEST_HOME/data/chapecron-usr.conf" "$test_config"
+	touch "$test_config"
 
 	"$CHAPECRON" -vvc "$test_config" -- date | \
 		grep "Loading configuration from file $test_config" > /dev/null
@@ -40,21 +40,21 @@ test_expect_success "$DESC" '
 
 DESC="Load the correct configuration from a file"
 test_expect_success "$DESC" '
-	local -r test_root="$SHARNESS_TRASH_DIRECTORY"
-	local -r test_config="$test_root/chapecron.conf.checked"
+	cat > config <<-CONFIG
+		plugins=chapecron::log chapecron::time
+		sample-key=user
+	CONFIG
 
-	cat > config-expected <<-EXPECTED
+	cat > expected <<-EXPECTED
 		-- Configuration loaded --
 		plugins = chapecron::log chapecron::time
 		sample-key = user
 		-- Configuration ends --
 	EXPECTED
 
-	cp "$TEST_HOME/data/chapecron-usr.conf" "$test_config"
-
-	"$CHAPECRON" -vvc "$test_config" -- date | \
-		sed -e "/-- Configuration loaded --/,/-- Configuration ends --/!d" > config
-	test_cmp config config-expected
+	"$CHAPECRON" -vvc config -- date | \
+		sed -e "/-- Configuration loaded --/,/-- Configuration ends --/!d" > output
+	test_cmp output expected
 '
 
 
@@ -64,7 +64,6 @@ test_expect_success "$DESC" '
 	local -r sys_config="$test_root/etc/chapecron/chapecron.conf"
 	local -r usr_config="$test_root/home/$(whoami)/.config/chapecron/chapecron.conf"
 
-
 	cat > expected <<-EXPECTED
 		Loading configuration from file $sys_config
 		Loading configuration from file $usr_config
@@ -72,8 +71,8 @@ test_expect_success "$DESC" '
 
 	mkdir -p "$(dirname "$sys_config")"
 	mkdir -p "$(dirname "$usr_config")"
-	cp "$TEST_HOME/data/chapecron-sys.conf" "$sys_config"
-	cp "$TEST_HOME/data/chapecron-usr.conf" "$usr_config"
+	touch "$sys_config"
+	touch "$usr_config"
 
 	CHAPECRON_PATH_PREFIX="$test_root" "$CHAPECRON" -vv -- date | \
 		grep -e "Loading configuration from file" > output
@@ -87,23 +86,33 @@ test_expect_success "$DESC" '
 	local -r sys_config="$test_root/etc/chapecron/chapecron.conf"
 	local -r usr_config="$test_root/home/$(whoami)/.config/chapecron/chapecron.conf"
 
-	cat > config-expected <<-EXPECTED
+	mkdir -p "$(dirname "$sys_config")"
+	mkdir -p "$(dirname "$usr_config")"
+
+	cat > "$sys_config" <<-SYS_CONFIG
+		plugins=chapecron::time
+		sample-key=sys
+	SYS_CONFIG
+
+	cat > "$usr_config" <<-SYS_CONFIG
+		plugins=chapecron::log chapecron::time
+		sample-key=user
+	SYS_CONFIG
+
+	cat > expected <<-EXPECTED
 		-- Configuration loaded --
 		plugins = chapecron::time chapecron::log
 		sample-key = user
 		-- Configuration ends --
 	EXPECTED
 
-	mkdir -p "$(dirname "$sys_config")"
-	mkdir -p "$(dirname "$usr_config")"
 	cp "$TEST_HOME/data/chapecron-sys.conf" "$sys_config"
 	cp "$TEST_HOME/data/chapecron-usr.conf" "$usr_config"
 
 	CHAPECRON_PATH_PREFIX="$test_root" "$CHAPECRON" -vv -- date | \
-		sed -e "/-- Configuration loaded --/,/-- Configuration ends --/!d" > config
-	test_cmp config config-expected
+		sed -e "/-- Configuration loaded --/,/-- Configuration ends --/!d" > output
+	test_cmp output expected
 '
 
 
 test_done
-

@@ -4,17 +4,22 @@ test_description="Basic features"
 
 . ./setup.sh
 
-test_expect_success "Output nothing on success" '
+DESC="Output nothing on success"
+test_expect_success "$DESC" '
 	test -z "$($CHAPECRON date)"
 '
 
-test_expect_success "Output nothing on standard output on failure" '
+
+DESC="Output nothing on standard output on failure"
+test_expect_success "$DESC" '
 	test -z "$(2>/dev/null $CHAPECRON date -w)"
 '
 
-test_expect_success "Output something on standard error output on failure" '
+
+DESC="Output something on standard error output on failure"
+test_expect_success "$DESC" '
 	test -n "$(2>&1 $CHAPECRON date -w)"
 '
 
-test_done
 
+test_done
