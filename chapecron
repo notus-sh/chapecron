@@ -72,7 +72,7 @@ utils::fail() {
 array::search() {
 	local needle=$1 value
 	shift
-	
+
 	eval set -- $@
 	for value in $@; do
 		[ "$value" == "$needle" ] && return 0
@@ -82,14 +82,14 @@ array::search() {
 
 array::merge() {
 	local merged=() value
-	
+
 	eval set -- $@
 	for value in $@; do
 		if ( ! array::search $value ${merged[@]} ); then
 			merged+=("$value")
 		fi
 	done
-	
+
   echo "${merged[@]}"
 }
 
@@ -118,7 +118,7 @@ dependencies::all() {
 	dependencies::getopt || \
 		utils::fail $EX_UNAVAILABLE \
 								"Missing dependency: enhanced getopt"
-		            
+
 	dependencies::bash4  || \
 		utils::fail $EX_UNAVAILABLE \
 								"Missing dependency: bash 4.0+"
@@ -137,13 +137,13 @@ options::usage() {
 		  -h,--help     Print this help and exit
 		  -v,--verbose  More verbose output.
 		                You can specify this option more than once
-		
+
 		By default, chapecron will look for configuration files at:
-		
+
 		- /etc/chapecron/chapecron.conf
 		- XDG_CONFIG_HOME/chapecron/chapecron.conf
 		  (usually ~/.config/chapecron/chapecron.conf)
-		
+
 		When specifying a configuration file as a command line option,
 		only this file will be considered.
 	USAGE
@@ -151,7 +151,7 @@ options::usage() {
 
 options::get() {
 	local parsed
-	
+
 	parsed=$(getopt --options=hvc: \
 									--longoptions=help,verbose,config: \
 									--name "$0" \
@@ -186,12 +186,13 @@ options::get() {
 	COMMAND=$(echo "$*"	| tr "\\n" " ")
 
 	[ $HELP -eq 1 ] && options::usage && exit 0
-	
+
 	[ -z "$COMMAND" ] && \
 		utils::fail $EX_USAGE \
 								"No command to look after. Use $0 -h to get help"
-	
-	eval "$(printf 'chapecron::command() { %s; return $?; }' $COMMAND)"
+
+	local command_template='chapecron::command() { %s; return $?; }'
+	eval "$(printf $command_template $COMMAND)"
 }
 
 
@@ -206,7 +207,7 @@ CONFIG_MERGEABLE+=('plugins')
 
 config::dir() {
 	local path
-	
+
 	case "$1" in
 		sys)
 			path="/etc"
@@ -220,7 +221,7 @@ config::dir() {
 						)
 			;;
 	esac
-	
+
 	echo "${path%/}/chapecron/"
 	return 0
 }
@@ -266,7 +267,7 @@ config::loadfile() {
 config::load() {
 
 	config::defaults
-		
+
 	if [ -n "$CONFIG_FILE" ]; then
 		config::loadfile "$CONFIG_FILE"
 		return
@@ -274,7 +275,7 @@ config::load() {
 
 	local f
 	local -a config_files
-	
+
 	config_files=(
 		"${CHAPECRON_PATH_PREFIX%/}${CONFIG_DIR_SYS%/}/chapecron.conf"
 		"${CHAPECRON_PATH_PREFIX%/}${CONFIG_DIR_USR%/}/chapecron.conf"
@@ -298,22 +299,22 @@ declare -r PLUGINS_DIR="$(dirname $(realpath $0))/plugins.d"
 
 plugins::load() {
 	local plugin f functions
-	
+
 	functions=$(declare -F | cut -d ' ' -f3)
-	
+
 	for plugin in "$PLUGINS_DIR"/*.sh; do
 		[ -r "$plugin" ] || \
 			utils::fail $EX_NOPERM \
 									"Plugin $plugin can not be read"
-	
+
 		utils::debug "Loading plugin from $plugin"
 	  source "$plugin"
 	done
-	
+
 	for f in $(declare -F | cut -d ' ' -f3); do
-	  if ( ! array::search "$f" $functions); then
-	    PLUGINS_AVAILABLE+=("$f")
-	  fi
+		if ( ! array::search "$f" $functions); then
+			PLUGINS_AVAILABLE+=("$f")
+		fi
 	done
 }
 
@@ -342,20 +343,20 @@ stack::run() {
 
 stack::build() {
 	local plugins plugin
-	
+
 	stack::add "chapecron::mktmp"
 	stack::add "chapecron::capture"
-	
+
 	if [ -n "${CONFIG['plugins']}" ]; then
 		for plugin in $(echo "${CONFIG['plugins']}" | tr " " "\\n"); do
 			if ( ! array::search "$plugin" "${PLUGINS_AVAILABLE[@]}"); then
 				utils::fail $EX_CONFIG "Unknown plugin: $plugin"
 			fi
-			
+
 			stack::add "$plugin"
 		done
 	fi
-	
+
 	stack::add "chapecron::command"
 }
 
@@ -373,7 +374,7 @@ report::options() {
 
 report::config() {
 	local key
-	
+
 	utils::debug "-- Configuration loaded --"
 	for key in "${!CONFIG[@]}"; do
 		utils::debug "$key = ${CONFIG[$key]}"
@@ -383,7 +384,7 @@ report::config() {
 
 report::plugins() {
 	local plugin
-	
+
 	utils::debug "-- Plugins available --"
 	for plugin in "${PLUGINS_AVAILABLE[@]}"; do
 		utils::debug "$plugin"
@@ -393,7 +394,7 @@ report::plugins() {
 
 report::stack() {
 	local middleware
-	
+
 	utils::debug "-- Stack build --"
 	for middleware in "${STACK[@]}"; do
 		utils::debug "$middleware"
@@ -476,4 +477,3 @@ stack::build			&& report::stack
 
 stack::run
 exit $?
-
