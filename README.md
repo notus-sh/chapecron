@@ -26,6 +26,32 @@ But honestly, if you only want to do this you'd better use [`cronic`](http://hab
 
 What makes `chapecron` different is an extensible set of pluggable middlewares that can be used to control and monitor your cron jobs' execution.
 
+## Installation
+
+`chapecron` comes with a Makefile to install and uninstall it.
+
+```
+git clone https://github.com/notus-sh/chapecron.git chapecron && cd chapecron
+make install
+```
+
+This will install `chapecron` to its default locations:
+
+* Main script and plugins to `/usr/local/lib/chapecron`
+* Sample configuration at `/etc/chapecron/chapecron.conf`
+* Main script linked to `/usr/local/bin/chapecron` to be (hopefully) available in your $PATH
+
+The Makefile is aware of the following environment variables:
+
+```
+DESTDIR   default:
+PREFIX    default: /usr/local
+CONFDIR   default: $(DESTDIR)/etc/chapecron
+BINDIR    default: $(DESTDIR)$(PREFIX)/bin
+LIBDIR    default: $(DESTDIR)$(PREFIX)/lib/chapecron
+```
+
+
 ## Usage
 
 ```
@@ -41,34 +67,28 @@ Supported options:
 * `-h` or `--help`: Display usage instructions and exit
 * `-v` or `--verbose`: Increase verbosity. Can be used up to two times
 
+As the whole point of `chapecron` is to be a silent supervisor for your cron jobs, verbosity options only exists to ease debugging a configuration.
+
 ### Examples
 
 ```
 chapecron -c ~/chapecron.conf -- backup
-chapecron -c ~/chapecron.conf -- /home/username/bin/my_other_backup_script with some arguments
+chapecron -- /home/username/bin/my_other_backup_script with some arguments
 ```
 
 ## Configuration
 
 `chapecron` configuration files are as simple as a bunch of `key=value`.
-Here is an example of what can be a configuration file to use all currently available plugins:
 
 ```
-# Core configuration
-middlewares=chapecron::timeout chapecron::time chapecron::log
-
+middlewares=chapecron::timeout chapecron::log
 # Log plugin
 log.path=/home/username/logs/crons.log
-
-# Time plugin
-time.format=Real: %e - Kernel: %S - User: %U - Inputs: %I - Outputs: %O
-time.path=/home/username/logs/cron-times.log
-
 # Timeout plugin
 timeout.duration=10s
-# timeout.signal=9
-# timeout.kill=2s
 ```
+
+The file `chapecron.conf` gives a sample configuration for all currently available plugins.
 
 When you specify a configuration file as a command line option, only this file will be loaded.
 If you don't, `chapecron` will automatically look for configuration files at:
