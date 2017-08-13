@@ -490,7 +490,7 @@ report::context() {
 }
 
 report::trace() {
-	echo "Cronic detected failure or error output for the command:"
+	echo "chapecron detected failure or error output for the command:"
 	echo "$@"
 	echo
 	echo "RESULT CODE: $RESULT"
@@ -517,9 +517,9 @@ chapecron::mktmp() {
 	declare -g TRACE
 
 	TMP=$(mktemp -d 'chapecron.XXXXXXXXXX')
-	OUT=$TMP/cronic.out
-	ERR=$TMP/cronic.err
-	TRACE=$TMP/cronic.trace
+	OUT=$TMP/chapecron.out
+	ERR=$TMP/chapecron.err
+	TRACE=$TMP/chapecron.trace
 
 	utils::debug "Output files created in $TMP"
 	if [ $CHAPECRON_DEBUG -eq 0 ]; then
