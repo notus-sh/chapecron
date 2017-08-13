@@ -151,9 +151,10 @@ options::usage() {
 	options::version
 	echo
 	cat <<-USAGE
-		Usage: chapecron [-v,--verbose] [-h,--help] [-c,--config CONFIG_FILE] -- COMMAND
+		Usage: chapecron [-v,--verbose] [--version] [-h,--help] [-c,--config CONFIG_FILE] -- COMMAND
 		Options:
 		  -c,--config   Specify a configuration file (See below)
+		  -version      Print version informations and exit
 		  -h,--help     Print this help and exit
 		  -v,--verbose  More verbose output.
 		                You can specify this option more than once
@@ -232,7 +233,7 @@ options::get() {
 declare -A CONFIG=()
 declare -a CONFIG_MERGEABLE
 
-CONFIG_MERGEABLE+=('plugins')
+CONFIG_MERGEABLE+=('middlewares')
 
 config::dir() {
 	local path
@@ -259,7 +260,7 @@ declare -r CONFIG_DIR_SYS=$(config::dir 'sys')
 declare -r CONFIG_DIR_USR=$(config::dir 'user')
 
 config::defaults() {
-	CONFIG=( ["plugins"]="" )
+	CONFIG=( ["middlewares"]="" )
 }
 
 config::loadfile() {
@@ -321,7 +322,7 @@ config::load() {
 #
 # Plugins
 #
-declare -a PLUGINS_AVAILABLE
+declare -a AVAILABLE_MIDDLEWARES
 declare -r PLUGINS_DIR="$(dirname $(realpath $0))/plugins.d"
 
 
@@ -348,7 +349,7 @@ plugins::load() {
 
 	for f in $(declare -F | cut -d ' ' -f3); do
 		if ( ! array::search "$f" $functions); then
-			PLUGINS_AVAILABLE+=("$f")
+			AVAILABLE_MIDDLEWARES+=("$f")
 		fi
 	done
 }
@@ -376,18 +377,18 @@ stack::run() {
 }
 
 stack::build() {
-	local plugins plugin
+	local middleware
 
 	stack::add "chapecron::mktmp"
 	stack::add "chapecron::capture"
 
-	if [ -n "${CONFIG['plugins']}" ]; then
-		for plugin in $(echo "${CONFIG['plugins']}" | tr " " "\\n"); do
-			if ( ! array::search "$plugin" "${PLUGINS_AVAILABLE[@]}"); then
-				utils::fail $EX_CONFIG "Unknown plugin: $plugin"
+	if [ -n "${CONFIG['middlewares']}" ]; then
+		for middleware in $(echo "${CONFIG['middlewares']}" | tr " " "\\n"); do
+			if ( ! array::search "$middleware" "${AVAILABLE_MIDDLEWARES[@]}"); then
+				utils::fail $EX_CONFIG "Unknown middleware: $middleware"
 			fi
 
-			stack::add "$plugin"
+			stack::add "$middleware"
 		done
 	fi
 
@@ -456,14 +457,14 @@ report::config() {
 	utils::debug "${REPORT_INDENT}-- Configuration ends --"
 }
 
-report::plugins() {
-	local plugin
+report::middlewares() {
+	local middleware
 
-	utils::debug "${REPORT_INDENT}-- Plugins available --"
-	for plugin in "${PLUGINS_AVAILABLE[@]}"; do
-		utils::debug "${REPORT_INDENT}$plugin"
+	utils::debug "${REPORT_INDENT}-- Middlewares available --"
+	for middleware in "${AVAILABLE_MIDDLEWARES[@]}"; do
+		utils::debug "${REPORT_INDENT}$middleware"
 	done
-	utils::debug "${REPORT_INDENT}-- Plugins ends --"
+	utils::debug "${REPORT_INDENT}-- Middlewares ends --"
 }
 
 report::stack() {
@@ -482,7 +483,7 @@ report::context() {
 
 	report::options
 	report::config
-	report::plugins
+	report::middlewares
 	report::stack
 
 	REPORT_INDENT="${REPORT_INDENT%= }"
@@ -568,7 +569,7 @@ options::get $@
 if [ $RECALL -eq 0 ]; then
 	report::options
 	config::load			&& report::config
-	plugins::load			&& report::plugins
+	plugins::load			&& report::middlewares
 	stack::build			&& report::stack
 else
 	context::rebuild	&& report::context

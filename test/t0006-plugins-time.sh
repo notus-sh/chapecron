@@ -9,7 +9,7 @@ if [ ! -e "/usr/bin/time" ]; then
 	DESC="Fail if time is not available"
 	test_expect_success "$DESC" '
 		cat > config <<-CONFIG
-			plugins=chapecron::time
+			middlewares=chapecron::time
 		CONFIG
 
 		test_expect_code 69 "$CHAPECRON" -c config -- uname -a
@@ -20,7 +20,7 @@ else
 	DESC="Fail if not configured"
 	test_expect_success "$DESC" '
 		cat > config <<-CONFIG
-			plugins=chapecron::time
+			middlewares=chapecron::time
 		CONFIG
 
 		test_expect_code 78 "$CHAPECRON" -c config -- uname -a
@@ -33,7 +33,7 @@ else
 		local -r test_log="$test_root/chapecron.log"
 
 		cat > config <<-CONFIG
-			plugins=chapecron::time
+			middlewares=chapecron::time
 			time.path=$test_log
 			time.format=Real: %e - Kernel: %S
 		CONFIG

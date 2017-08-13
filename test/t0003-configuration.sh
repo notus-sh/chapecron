@@ -41,14 +41,14 @@ test_expect_success "$DESC" '
 DESC="Load the correct configuration from a file"
 test_expect_success "$DESC" '
 	cat > config <<-CONFIG
-		plugins=chapecron::log chapecron::time
 		sample-key=user
+		middlewares=chapecron::log chapecron::time
 	CONFIG
 
 	cat > expected <<-EXPECTED
 		-- Configuration loaded --
-		plugins = chapecron::log chapecron::time
 		sample-key = user
+		middlewares = chapecron::log chapecron::time
 		-- Configuration ends --
 	EXPECTED
 
@@ -90,24 +90,21 @@ test_expect_success "$DESC" '
 	mkdir -p "$(dirname "$usr_config")"
 
 	cat > "$sys_config" <<-SYS_CONFIG
-		plugins=chapecron::time
 		sample-key=sys
+		middlewares=chapecron::time
 	SYS_CONFIG
 
 	cat > "$usr_config" <<-SYS_CONFIG
-		plugins=chapecron::log chapecron::time
 		sample-key=user
+		middlewares=chapecron::log chapecron::time
 	SYS_CONFIG
 
 	cat > expected <<-EXPECTED
 		-- Configuration loaded --
-		plugins = chapecron::time chapecron::log
 		sample-key = user
+		middlewares = chapecron::time chapecron::log
 		-- Configuration ends --
 	EXPECTED
-
-	cp "$TEST_HOME/data/chapecron-sys.conf" "$sys_config"
-	cp "$TEST_HOME/data/chapecron-usr.conf" "$usr_config"
 
 	CHAPECRON_PATH_PREFIX="$test_root" "$CHAPECRON" -vv -- date | \
 		sed -e "/^-- Configuration loaded --/,/^-- Configuration ends --/!d" > output

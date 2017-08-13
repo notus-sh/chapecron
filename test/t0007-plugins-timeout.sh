@@ -7,7 +7,7 @@ test_description="Timeout plugin"
 DESC="Fail if not configured"
 test_expect_success "$DESC" '
 	cat > config <<-CONFIG
-		plugins=chapecron::timeout
+		middlewares=chapecron::timeout
 	CONFIG
 
 	test_expect_code 78 "$CHAPECRON" -c config -- uname -a
@@ -17,7 +17,7 @@ test_expect_success "$DESC" '
 DESC="Kill long running command"
 test_expect_success "$DESC" '
 	cat > config <<-CONFIG
-		plugins=chapecron::timeout
+		middlewares=chapecron::timeout
 		timeout.duration=1s
 	CONFIG
 

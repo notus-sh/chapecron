@@ -8,14 +8,14 @@ test_description="Plugins loading"
 DESC="Load plugins from plugin directory"
 test_expect_success "$DESC" "
 	cat > plugins-expected <<-EXPECTED
-		-- Plugins available --
+		-- Middlewares available --
 		chapecron::hatch
 		chapecron::stursky
-		-- Plugins ends --
+		-- Middlewares ends --
 	EXPECTED
 
 	CHAPECRON_PLUGIN_PATTERN=$'/dummies/*.sh' \"$CHAPECRON\" -vv -- date | \
-		sed -e '/^-- Plugins available --/,/^-- Plugins ends --/!d' > plugins
+		sed -e '/^-- Middlewares available --/,/^-- Middlewares ends --/!d' > plugins
 	test_cmp plugins plugins-expected
 "
 
@@ -27,10 +27,10 @@ test_expect_success "$DESC" "
 "
 
 
-DESC="Fail if a configured plugin is not available"
+DESC="Fail if a configured middleware is not available"
 test_expect_success "$DESC" "
 	cat > config <<-CONFIG
-		plugins=chapecron::stursky chapecron::hatch chapecron::huggy
+		middlewares=chapecron::stursky chapecron::hatch chapecron::huggy
 	CONFIG
 
 	export CHAPECRON_PLUGIN_PATTERN=$'/dummies/*.sh'
@@ -41,7 +41,7 @@ test_expect_success "$DESC" "
 DESC="Add configured plugins to the stack"
 test_expect_success "$DESC" "
 	cat > config <<-CONFIG
-		plugins=chapecron::stursky chapecron::hatch
+		middlewares=chapecron::stursky chapecron::hatch
 	CONFIG
 
 	cat > stack-expected <<-EXPECTED
@@ -60,10 +60,10 @@ test_expect_success "$DESC" "
 "
 
 
-DESC="Support plugins that invoke a subshell"
+DESC="Support middlewares that invoke a subshell"
 test_expect_success "$DESC" "
 	cat > config <<-CONFIG
-		plugins=chapecron::stursky
+		middlewares=chapecron::stursky
 	CONFIG
 
 	cat > expected <<-EXPECTED
@@ -74,12 +74,12 @@ test_expect_success "$DESC" "
 		= verbose = 2
 		= -- Command line options ends --
 		= -- Configuration loaded --
-		= plugins = chapecron::stursky
+		= middlewares = chapecron::stursky
 		= -- Configuration ends --
-		= -- Plugins available --
+		= -- Middlewares available --
 		= chapecron::hatch
 		= chapecron::stursky
-		= -- Plugins ends --
+		= -- Middlewares ends --
 		= -- Stack build --
 		= chapecron::mktmp
 		= chapecron::capture

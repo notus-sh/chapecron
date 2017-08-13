@@ -8,7 +8,7 @@ test_description="Log plugin"
 DESC="Fail if not configured"
 test_expect_success "$DESC" '
 	cat > config <<-CONFIG
-		plugins=chapecron::log
+		middlewares=chapecron::log
 	CONFIG
 
 	test_expect_code 78 "$CHAPECRON" -c config -- uname -a
@@ -21,7 +21,7 @@ test_expect_success "$DESC" '
 	local -r test_log="$test_root/chapecron.log"
 
 	cat > config <<-CONFIG
-		plugins=chapecron::log
+		middlewares=chapecron::log
 		log.path=$test_log
 	CONFIG
 
