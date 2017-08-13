@@ -5,10 +5,22 @@ test_description="Options handling"
 . ./setup.sh
 
 
+DESC="Fail when invoked without a command to monitor"
+test_expect_success "$DESC" '
+	test_expect_code  64 $CHAPECRON 2>/dev/null
+'
+
+
+DESC="Output version information when invoked with --version"
+test_expect_success "$DESC" '
+	$CHAPECRON --version | grep "Version: " > /dev/null
+'
+
+
 DESC="Output help when invoked with -h or --help"
 test_expect_success "$DESC" '
-	$CHAPECRON -h | grep "chapecron: look after your crons" > /dev/null && \
-	$CHAPECRON --help | grep "chapecron: look after your crons" > /dev/null
+	$CHAPECRON -h | grep "Usage: chapecron" > /dev/null && \
+	$CHAPECRON --help | grep "Usage: chapecron" > /dev/null
 '
 
 

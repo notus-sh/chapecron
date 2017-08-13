@@ -17,6 +17,7 @@ IFS=$'\n\t'
 ##
 ## Global variables
 ##
+declare -r CHAPECRON_VERSION="1.0.0"
 declare -r CHAPECRON_BIN="$(realpath $0)"
 
 ## Exit statuses
@@ -34,12 +35,20 @@ declare CONFIG_FILE=''
 # Default flags
 declare -i RECALL=0
 declare -i VERBOSE=0
+declare -i VERSION=0
 declare -i HELP=0
 
 
 #
 # Utilities
 #
+string::trim() {
+	local var=$(echo "$*"	| tr "\\n" " ")
+	var="${var#"${var%%[![:space:]]*}"}"
+	var="${var%"${var##*[![:space:]]}"}"
+	echo -n "$var"
+}
+
 utils::log() {
 	[ $VERBOSE -ge $1 ] || return 0
 
@@ -131,10 +140,18 @@ dependencies::all() {
 #
 # Command line options
 #
+options::version() {
+	cat <<-_EOF
+	chapecron - Look after your crons while you are away
+	Version: $CHAPECRON_VERSION
+	_EOF
+}
+
 options::usage() {
+	options::version
+	echo
 	cat <<-USAGE
-		chapecron: look after your crons while you are away
-		Usage: $0 [-v,--verbose] [-h,--help] -- COMMAND
+		Usage: chapecron [-v,--verbose] [-h,--help] [-c,--config CONFIG_FILE] -- COMMAND
 		Options:
 		  -c,--config   Specify a configuration file (See below)
 		  -h,--help     Print this help and exit
@@ -156,7 +173,7 @@ options::get() {
 	local parsed
 
 	parsed=$(getopt --options=hvc:r \
-									--longoptions=help,verbose,config: \
+									--longoptions=help,verbose,config:,version \
 									--name "$0" \
 									-- "$@")
 	eval set -- "$parsed"
@@ -175,6 +192,10 @@ options::get() {
 				VERBOSE+=1
 				shift
 				;;
+			--version)
+				VERSION=1
+				shift
+				;;
 			-h|--help)
 				HELP=1
 				shift
@@ -191,9 +212,10 @@ options::get() {
 	done
 
 	[ $RECALL -eq 1 ] && return 0
+	[ $VERSION -eq 1 ] && options::version && exit 0
 	[ $HELP -eq 1 ] && options::usage && exit 0
 
-	COMMAND=$(echo "$*"	| tr "\\n" " ")
+	COMMAND=$(string::trim "$*")
 
 	[ -z "$COMMAND" ] && \
 		utils::fail $EX_USAGE \
