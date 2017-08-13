@@ -5,7 +5,7 @@ test_description="Plugins loading"
 . ./setup.sh
 
 
-DESC="Should load plugins from plugin directory"
+DESC="Load plugins from plugin directory"
 test_expect_success "$DESC" "
 	cat > plugins-expected <<-EXPECTED
 		-- Plugins available --
@@ -20,14 +20,14 @@ test_expect_success "$DESC" "
 "
 
 
-DESC="Should fail if trying to load plugins from another directory"
+DESC="Fail if trying to load plugins from another directory"
 test_expect_success "$DESC" "
 	export CHAPECRON_PLUGIN_PATTERN=$'/../test/sharness.d/*.sh'
 	test_expect_code 64 \"$CHAPECRON\" -- date 2>/dev/null
 "
 
 
-DESC="Should fail if a configured plugin is not available"
+DESC="Fail if a configured plugin is not available"
 test_expect_success "$DESC" "
 	cat > config <<-CONFIG
 		plugins=chapecron::stursky chapecron::hatch chapecron::huggy
@@ -38,7 +38,7 @@ test_expect_success "$DESC" "
 "
 
 
-DESC="Should add configured plugins to the stack"
+DESC="Add configured plugins to the stack"
 test_expect_success "$DESC" "
 	cat > config <<-CONFIG
 		plugins=chapecron::stursky chapecron::hatch
@@ -60,7 +60,7 @@ test_expect_success "$DESC" "
 "
 
 
-DESC="Should support plugins that invoke a subshell"
+DESC="Support plugins that invoke a subshell"
 test_expect_success "$DESC" "
 	cat > config <<-CONFIG
 		plugins=chapecron::stursky

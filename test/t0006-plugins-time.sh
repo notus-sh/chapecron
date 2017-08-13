@@ -6,7 +6,7 @@ test_description="Time plugin"
 
 if [ ! -e "/usr/bin/time" ]; then
 
-	DESC="Should fail if time is not available"
+	DESC="Fail if time is not available"
 	test_expect_success "$DESC" '
 		cat > config <<-CONFIG
 			plugins=chapecron::time
@@ -17,7 +17,7 @@ if [ ! -e "/usr/bin/time" ]; then
 
 else
 
-	DESC="Should fail if not configured"
+	DESC="Fail if not configured"
 	test_expect_success "$DESC" '
 		cat > config <<-CONFIG
 			plugins=chapecron::time
@@ -27,7 +27,7 @@ else
 	'
 
 
-	DESC="Should append timing to the configured log file"
+	DESC="Append timing to the configured log file"
 	test_expect_success "$DESC" '
 		local -r test_root="$SHARNESS_TRASH_DIRECTORY"
 		local -r test_log="$test_root/chapecron.log"
