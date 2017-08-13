@@ -1,6 +1,7 @@
 #!/bin/env bash
 
 chapecron::stursky() {
-	stack::next
+	context::export
+	bash -c "chapecron -r"
 	return $?
 }

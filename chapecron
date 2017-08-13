@@ -17,6 +17,7 @@ IFS=$'\n\t'
 ##
 ## Global variables
 ##
+declare -r CHAPECRON_BIN="$(realpath $0)"
 
 ## Exit statuses
 # See https://goo.gl/6uEMX3 for full reference
@@ -31,6 +32,7 @@ declare COMMAND=''
 # Default options
 declare CONFIG_FILE=''
 # Default flags
+declare -i RECALL=0
 declare -i VERBOSE=0
 declare -i HELP=0
 
@@ -153,7 +155,7 @@ options::usage() {
 options::get() {
 	local parsed
 
-	parsed=$(getopt --options=hvc: \
+	parsed=$(getopt --options=hvc:r \
 									--longoptions=help,verbose,config: \
 									--name "$0" \
 									-- "$@")
@@ -161,6 +163,10 @@ options::get() {
 
 	while :; do
 		case "$1" in
+			-r)
+				RECALL=1
+				shift
+				;;
 			-c|--config)
 				CONFIG_FILE=$2
 				shift 2
@@ -184,24 +190,24 @@ options::get() {
 		esac
 	done
 
-	COMMAND=$(echo "$*"	| tr "\\n" " ")
-
+	[ $RECALL -eq 1 ] && return 0
 	[ $HELP -eq 1 ] && options::usage && exit 0
+
+	COMMAND=$(echo "$*"	| tr "\\n" " ")
 
 	[ -z "$COMMAND" ] && \
 		utils::fail $EX_USAGE \
 								"No command to look after. Use $0 -h to get help"
 
-	local command_template='chapecron::command() { %s; return $?; }'
-	eval "$(printf $command_template $COMMAND)"
+	local command_template='chapecroned_command() { %s; return $?; }'
+	eval "$(printf "$command_template" "$COMMAND")"
 }
 
 
 #
 # Configuration
 #
-declare -A CONFIG
-
+declare -A CONFIG=()
 declare -a CONFIG_MERGEABLE
 
 CONFIG_MERGEABLE+=('plugins')
@@ -271,23 +277,22 @@ config::load() {
 
 	if [ -n "$CONFIG_FILE" ]; then
 		config::loadfile "$CONFIG_FILE"
-		return
+	else
+		local f
+		local -a config_files
+
+		config_files=(
+			"${CHAPECRON_PATH_PREFIX%/}${CONFIG_DIR_SYS%/}/chapecron.conf"
+			"${CHAPECRON_PATH_PREFIX%/}${CONFIG_DIR_USR%/}/chapecron.conf"
+		)
+
+		for f in "${config_files[@]}"; do
+			utils::debug "Looking for a configuration file at $f"
+			if [ -e "$f" ]; then
+				config::loadfile "$f"
+			fi
+		done
 	fi
-
-	local f
-	local -a config_files
-
-	config_files=(
-		"${CHAPECRON_PATH_PREFIX%/}${CONFIG_DIR_SYS%/}/chapecron.conf"
-		"${CHAPECRON_PATH_PREFIX%/}${CONFIG_DIR_USR%/}/chapecron.conf"
-	)
-
-	for f in "${config_files[@]}"; do
-		utils::debug "Looking for a configuration file at $f"
-		if [ -e "$f" ]; then
-			config::loadfile "$f"
-		fi
-	done
 }
 
 
@@ -330,21 +335,20 @@ plugins::load() {
 #
 # Stack management
 #
-declare -a STACK
-declare -i STACK_COUNTER=0
+declare -a CHAPECRON_STACK=()
+declare -i CHAPECRON_STACK_ITERATOR=0
 
 stack::add() {
-	STACK+=("$@")
+	CHAPECRON_STACK+=("$@")
 }
 
 stack::next() {
-	local next=${STACK[$STACK_COUNTER]}
-	STACK_COUNTER+=1
+	local next=${CHAPECRON_STACK[$CHAPECRON_STACK_ITERATOR]}
+	CHAPECRON_STACK_ITERATOR+=1
 	$next
 }
 
 stack::run() {
-	STACK_COUNTER=0
 	stack::next
 	return $?
 }
@@ -370,44 +374,97 @@ stack::build() {
 
 
 #
+# Execution context
+#
+context::export() {
+	local options_tpl=$'chapecron_rebuild__options() { COMMAND="%s"; VERBOSE=%i; return 0; }'
+	eval "$(printf "$options_tpl" "$COMMAND" $VERBOSE)"
+	export -f chapecron_rebuild__options
+
+	local config_tpl=$'chapecron_rebuild__config() { %s return 0; }'
+	local config_body=""
+	local config_entry=$'CONFIG["%s"]="%s"; '
+	local key
+	for key in "${!CONFIG[@]}"; do
+		config_body+="$(printf "$config_entry" "$key" "${CONFIG[$key]}")"
+	done
+	eval "$(printf "$config_tpl" "$config_body")"
+	export -f chapecron_rebuild__config
+
+	local stack_tpl=$'chapecron_rebuild__stack() { %s CHAPECRON_STACK_ITERATOR=%i; return 0; }'
+	local stack_body="$(printf $'stack::add "%s"; ' "${CHAPECRON_STACK[@]}")"
+	eval "$(printf "$stack_tpl" "$stack_body" $CHAPECRON_STACK_ITERATOR)"
+	export -f chapecron_rebuild__stack
+
+	export -f chapecroned_command
+}
+
+context::rebuild() {
+	chapecron_rebuild__options && unset -f chapecron_rebuild__options
+	chapecron_rebuild__config && unset -f chapecron_rebuild__config
+	plugins::load
+	chapecron_rebuild__stack && unset -f chapecron_rebuild__stack
+}
+
+
+#
 # Output
 #
+declare REPORT_INDENT=""
+
 report::options() {
-	utils::info  "Command to be monitored: $COMMAND"
-	utils::debug "-- Command line options detected --"
-	utils::debug "config file = ${CONFIG_FILE:-undefined}"
-	utils::debug "verbose = $VERBOSE"
-	utils::debug "-- Command line options ends --"
+	utils::info  "${REPORT_INDENT}Command to be monitored: $COMMAND"
+	utils::debug "${REPORT_INDENT}-- Command line options detected --"
+	if [ $RECALL -eq 0 ]; then
+		utils::debug "${REPORT_INDENT}config file = ${CONFIG_FILE:-undefined}"
+	else
+		utils::debug "${REPORT_INDENT}recall = $RECALL"
+	fi
+	utils::debug "${REPORT_INDENT}verbose = $VERBOSE"
+	utils::debug "${REPORT_INDENT}-- Command line options ends --"
 }
 
 report::config() {
 	local key
 
-	utils::debug "-- Configuration loaded --"
+	utils::debug "${REPORT_INDENT}-- Configuration loaded --"
 	for key in "${!CONFIG[@]}"; do
-		utils::debug "$key = ${CONFIG[$key]}"
+		utils::debug "${REPORT_INDENT}$key = ${CONFIG[$key]}"
 	done
-	utils::debug "-- Configuration ends --"
+	utils::debug "${REPORT_INDENT}-- Configuration ends --"
 }
 
 report::plugins() {
 	local plugin
 
-	utils::debug "-- Plugins available --"
+	utils::debug "${REPORT_INDENT}-- Plugins available --"
 	for plugin in "${PLUGINS_AVAILABLE[@]}"; do
-		utils::debug "$plugin"
+		utils::debug "${REPORT_INDENT}$plugin"
 	done
-	utils::debug "-- Plugins ends --"
+	utils::debug "${REPORT_INDENT}-- Plugins ends --"
 }
 
 report::stack() {
 	local middleware
 
-	utils::debug "-- Stack build --"
-	for middleware in "${STACK[@]}"; do
-		utils::debug "$middleware"
+	utils::debug "${REPORT_INDENT}-- Stack build --"
+	for middleware in "${CHAPECRON_STACK[@]}"; do
+		utils::debug "${REPORT_INDENT}$middleware"
 	done
-	utils::debug "-- Stack ends --"
+	utils::debug "${REPORT_INDENT}-- Stack ends --"
+}
+
+report::context() {
+	utils::debug "-- Context rebuild --"
+	REPORT_INDENT+="= "
+
+	report::options
+	report::config
+	report::plugins
+	report::stack
+
+	REPORT_INDENT="${REPORT_INDENT%= }"
+	utils::debug "-- Context ends --"
 }
 
 report::trace() {
@@ -466,10 +523,17 @@ chapecron::capture() {
 	fi
 
 	if ([ $RESULT -ne 0 ] || [ -s "$ERR" ]); then
-		echo -e "$(report::trace "$COMMAND")"
+		utils::error "$(report::trace "$COMMAND")"
+	else
+		utils::debug "$(cat "$OUT")"
 	fi
 
 	return $RESULT
+}
+
+chapecron::command() {
+	chapecroned_command
+	return $?
 }
 
 
@@ -477,11 +541,16 @@ chapecron::capture() {
 # Here we go!
 #
 dependencies::all
+options::get $@
 
-options::get $@ 	&& report::options
-config::load			&& report::config
-plugins::load			&& report::plugins
-stack::build			&& report::stack
+if [ $RECALL -eq 0 ]; then
+	report::options
+	config::load			&& report::config
+	plugins::load			&& report::plugins
+	stack::build			&& report::stack
+else
+	context::rebuild	&& report::context
+fi
 
 stack::run
 exit $?

@@ -15,7 +15,7 @@ test_expect_success "$DESC" "
 	EXPECTED
 
 	CHAPECRON_PLUGIN_PATTERN=$'/dummies/*.sh' \"$CHAPECRON\" -vv -- date | \
-		sed -e '/-- Plugins available --/,/-- Plugins ends --/!d' > plugins
+		sed -e '/^-- Plugins available --/,/^-- Plugins ends --/!d' > plugins
 	test_cmp plugins plugins-expected
 "
 
@@ -55,8 +55,43 @@ test_expect_success "$DESC" "
 	EXPECTED
 
 	CHAPECRON_PLUGIN_PATTERN=$'/dummies/*.sh' \"$CHAPECRON\" -vvc config -- date | \
-		sed -e '/-- Stack build --/,/-- Stack ends --/!d' > stack
+		sed -e '/^-- Stack build --/,/^-- Stack ends --/!d' > stack
 	test_cmp stack stack-expected
+"
+
+
+DESC="Should support plugins that invoke a subshell"
+test_expect_success "$DESC" "
+	cat > config <<-CONFIG
+		plugins=chapecron::stursky
+	CONFIG
+
+	cat > expected <<-EXPECTED
+		-- Context rebuild --
+		= Command to be monitored: date
+		= -- Command line options detected --
+		= recall = 1
+		= verbose = 2
+		= -- Command line options ends --
+		= -- Configuration loaded --
+		= plugins = chapecron::stursky
+		= -- Configuration ends --
+		= -- Plugins available --
+		= chapecron::hatch
+		= chapecron::stursky
+		= -- Plugins ends --
+		= -- Stack build --
+		= chapecron::mktmp
+		= chapecron::capture
+		= chapecron::stursky
+		= chapecron::command
+		= -- Stack ends --
+		-- Context ends --
+	EXPECTED
+
+	CHAPECRON_PLUGIN_PATTERN=$'/dummies/*.sh' \"$CHAPECRON\" -vvc config -- date | \
+		sed -e '/^-- Context rebuild --/,/^-- Context ends --/!d' > context
+	test_cmp context expected
 "
 
 

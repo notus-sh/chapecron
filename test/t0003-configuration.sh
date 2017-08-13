@@ -53,7 +53,7 @@ test_expect_success "$DESC" '
 	EXPECTED
 
 	"$CHAPECRON" -vvc config -- date | \
-		sed -e "/-- Configuration loaded --/,/-- Configuration ends --/!d" > output
+		sed -e "/^-- Configuration loaded --/,/^-- Configuration ends --/!d" > output
 	test_cmp output expected
 '
 
@@ -110,7 +110,7 @@ test_expect_success "$DESC" '
 	cp "$TEST_HOME/data/chapecron-usr.conf" "$usr_config"
 
 	CHAPECRON_PATH_PREFIX="$test_root" "$CHAPECRON" -vv -- date | \
-		sed -e "/-- Configuration loaded --/,/-- Configuration ends --/!d" > output
+		sed -e "/^-- Configuration loaded --/,/^-- Configuration ends --/!d" > output
 	test_cmp output expected
 '
 
