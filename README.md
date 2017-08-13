@@ -5,10 +5,11 @@
 ## Why `chapecron`?
 
 Cron automatically emails the output of a cron job to the user, to warn him when a problem occurs.
-As usefull as it sounds, cron consider any output as an error and it can be difficult to write cron jobs that outputs nothing but real errors.
+As usefull as it sounds, cron considers any output as an error and it can be difficult to write cron jobs that output nothing but real errors.
 It also ignores command result codes, so a quiet programs can fail without being noticed.
 
-To not be bothered by tons of useless emails, the typical solution is to hide everything and hope scripts will run smoothly.
+To not be bothered by tons of useless emails, most people do things like this:  
+_(or don't configure anything else than the default local mailboxes)_
 
 ```
 # Chances are it will be too late when you discover this doesn't work
@@ -21,7 +22,7 @@ The base feature of `chapecron` is to wrap cron jobs so they won't output anythi
 Thus, cron will only send you an email when something bad really happened.
 (Something bad is defined as any non-trace error output or a non-zero result code.)
 
-That's what `chapecron` will do without any configuration or arguments other than a command to monitor.
+That's what `chapecron` will do without any configuration or arguments other than a command to look after.
 But honestly, if you only want to do this you'd better use [`cronic`](http://habilis.net/cronic/).
 
 What makes `chapecron` different is an extensible set of pluggable middlewares that can be used to control and monitor your cron jobs' execution.
@@ -88,7 +89,7 @@ log.path=/home/username/logs/crons.log
 timeout.duration=10s
 ```
 
-The file `chapecron.conf` gives a sample configuration for all currently available plugins.
+[The file `chapecron.conf`](https://github.com/notus-sh/chapecron/blob/master/chapecron.conf) gives a sample configuration for all currently available plugins.
 
 When you specify a configuration file as a command line option, only this file will be loaded.
 If you don't, `chapecron` will automatically look for configuration files at:
@@ -121,8 +122,8 @@ A `chapecron` middleware is just a Bash function so you can easily write your ow
 
 To be a gentle citizen, a middleware has only two responsability:
 
-* Invoke the lower one in the stack
-* Return its exit status to the upper one, or a meaningfull return code if something wrong happened in it
+* Invoke the lower one in the stack.
+* Return its exit status to the upper one, or a meaningfull return code if something wrong happened.
 
 Invoking the next middleware in the stack can be done in two different ways.
 The easiest is to call `stack::next` when you need but this will not work if the next middleware is to be called in a subshell.
@@ -130,12 +131,13 @@ The easiest is to call `stack::next` when you need but this will not work if the
 Monitoring tools as `timeout` or `time`, for example, tend to encapsulate the command they will look after in a subshell.
 That means you can't use the `stack::next` function as the newly created shell will know nothing about the context of its parent, except what has been exported.
 
-To workaround this, you can call `context::export` in your middleware function and replace the `stack::next` call by `chapecron -r`.
+To work around this, you can call `context::export` in your middleware function and replace the `stack::next` call by `chapecron -r`.
 This way, `chapecron` will reinvoke itself and be able to restaure the saved context and continue its job.
 
-Have a look at the sources of existing plugins for more examples and if you write a usefull plugins, please consider opening a pull request :)
+Have a look at the sources of existing plugins for more examples.  
+If you write a usefull plugin, please consider opening a pull request :)
 
 ## Acknowledgment
 
-`chapecron` initiated as a fork of [`cronic`](http://habilis.net/cronic/) by Chuck Houpt (and inherited its license).
+`chapecron` initiated as a fork of [`cronic`](http://habilis.net/cronic/) by Chuck Houpt (and inherited its license).  
 Changes made to the original script can be seen by comparing the `cronic` and `master` branches of this repo.
