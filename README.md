@@ -112,6 +112,8 @@ Only one instance of a each declared middleware will be added to the stack.
   Keep trace of your scripts' CPU and memory usage or anything that can be mesured by [GNU time](https://www.gnu.org/software/time/)
 * `chapecron::timeout`  
   Ensure your scripts will not run forever
+* `chapecron::nice`  
+  Run your scripts with a niceness adjustment
 
 ### Write your own
 
