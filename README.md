@@ -132,10 +132,27 @@ Monitoring tools as `timeout` or `time`, for example, tend to encapsulate the co
 That means you can't use the `stack::next` function as the newly created shell will know nothing about the context of its parent, except what has been exported.
 
 To work around this, you can call `context::export` in your middleware function and replace the `stack::next` call by `chapecron -r`.
-This way, `chapecron` will reinvoke itself and be able to restaure the saved context and continue its job.
+This way, `chapecron` will reinvoke itself and be able to restore the saved context and continue its job.
 
 Have a look at the sources of existing plugins for more examples.  
 If you write a usefull plugin, please consider opening a pull request :)
+
+## Alternatives
+
+* [`cronic`](http://habilis.net/cronic/)  
+  Simple and lightweight Bash wrapper to keep your cron jobs quiet between two failures.
+* [`cronwrap`](https://github.com/Doist/cronwrap)  
+  Cron wrapper written in Python. Supports timeout and custom email recipients.
+* [`croncape`](https://github.com/sensiocloud/croncape)  
+  cronwrap equivalent in Go, with some refinements.
+* [`cronutils`](https://github.com/google/cronutils)  
+  Collection of small utilities written in C to assist running batch jobs. Supports timeout, unique jobs and some kind of stats.
+* [`Cronwrap`](http://www.uow.edu.au/~sah/cronwrap.html)  
+  Job wrapper written in C. Supports logging, timeout and custom email formatting.  
+	**Does not seem to be maintained anymore.**
+* [`shush`](http://web.taranis.org/shush/)
+  More complex job wrapper written in C. Supports multiple reports, system logging, timeout, unique jobs and more.  
+	**Does not seem to be maintained anymore.**
 
 ## Acknowledgment
 
