@@ -3,8 +3,11 @@ sudo: false
 addons:
   apt:
     packages:
-      - git   # For test dependencies installation
-      - time  # For the time plugin
+      # For test dependencies installation
+      - git
+      - realpath
+      # For the time middleware
+      - time
 
 script:
   - make test
