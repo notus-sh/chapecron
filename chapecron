@@ -93,7 +93,8 @@ array::search() {
 }
 
 array::merge() {
-	local merged=() value
+	local -a merged=()
+	local value
 
 	eval set -- $@
 	for value in $@; do

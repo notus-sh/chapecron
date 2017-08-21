@@ -3,10 +3,11 @@ sudo: false
 addons:
   apt:
     packages:
-      # For test dependencies installation
-      - git
-      # For the time middleware
-      - time
+      # chapecron dependencies
+      - time      # For the time middleware
+      # Test dependencies
+      - git       # For test dependencies installation
+      - pcregrep  # For complex pattern matching in tests
 
 env:
   - VERBOSE=1
