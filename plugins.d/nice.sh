@@ -10,7 +10,7 @@ chapecron::nice() {
 	fi
 
 	context::export
-	/bin/env nice --adjustment=$adjustment "$CHAPECRON_BIN" -r
+	/usr/bin/env nice --adjustment=$adjustment "$CHAPECRON_BIN" -r
 	exit_code=$?
 
 	if [ $exit_code -ge 125 ] && [ $exit_code -le 127 ]; then

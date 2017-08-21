@@ -22,7 +22,7 @@ test_expect_success "$DESC" '
 	CONFIG
 
 	local begin_at=$(date +"%s")
-	"$CHAPECRON" -c config -- sleep 10
+	"$CHAPECRON" -c config -- sleep 10 2>/dev/null
 	local end_at=$(date +"%s")
 	local diff=$(($end_at - $begin_at))
 
