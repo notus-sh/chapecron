@@ -8,6 +8,9 @@ addons:
       # For the time middleware
       - time
 
+env:
+  - VERBOSE=1
+
 script:
   - make test
 
