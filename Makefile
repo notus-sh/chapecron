@@ -28,4 +28,7 @@ install-config:
 uninstall:
 	@rm -vrf "$(LIBDIR)" "$(CONFDIR)" "$(BINDIR)/chapecron"
 
-.PHONY: install uninstall install-chapecron install-plugins install-config
+test:
+	@cd tests && make
+
+.PHONY: install uninstall install-chapecron install-plugins install-config test

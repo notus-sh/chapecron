@@ -1,0 +1,14 @@
+sudo: false
+
+addons:
+  apt:
+    packages:
+      - git   # For test dependencies installation
+      - time  # For the time plugin
+
+script:
+  - make test
+
+branches:
+  only:
+    - master
