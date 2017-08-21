@@ -17,7 +17,7 @@ test_expect_success "$DESC" '
 DESC="Fail when invoked with -c or --config for a non readable file"
 test_expect_success "$DESC" '
 	local -r test_root="$SHARNESS_TRASH_DIRECTORY"
-	local -r test_config="$test_root/chapecron.conf.not-unreadable"
+	local -r test_config="$test_root/chapecron.conf.not-readable"
 
 	touch "$test_config"
 	chmod u-r "$test_config"
