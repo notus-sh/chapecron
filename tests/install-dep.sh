@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 #
 # This script checks that a dependency is installed in `$(pwd)/lib/$DEPENDENCY`.
 # If not, it will clone it from $REPOSITORY. If not uptodate with $VERSION, it
@@ -42,4 +42,3 @@ touch "VERSION_$VERSION"   || die "Could not create 'VERSION_$VERSION'"
 echo "$DEPENDENCY version $VERSION is checked out!"
 
 exit 0
-

@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 chapecron::nice() {
 	local -i adjustment=0 exit_code=0 nice_value=0

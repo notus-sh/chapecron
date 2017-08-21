@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 # Environment variables
 : ${CHAPECRON_DEBUG:=0}

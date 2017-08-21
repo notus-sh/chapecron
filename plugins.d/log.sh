@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 chapecron::log() {
 	[ ${CONFIG['log.path']+isset} ] || \

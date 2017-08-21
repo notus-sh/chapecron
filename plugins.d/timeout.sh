@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 chapecron::timeout() {
 	[ ${CONFIG['timeout.duration']+isset} ] || \
