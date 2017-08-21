@@ -5,7 +5,6 @@ addons:
     packages:
       # For test dependencies installation
       - git
-      - realpath
       # For the time middleware
       - time
 

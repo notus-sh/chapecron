@@ -10,11 +10,11 @@
 cd "$(dirname "$0")"
 declare -r TEST_HOME="$(pwd)"
 
-if (! realpath -e "$TEST_HOME/../chapecron" > /dev/null); then
+if (! readlink -e "$TEST_HOME/../chapecron" > /dev/null); then
 	echo "Could not find chapecron" >&2
 	exit 1
 fi
-declare -r CHAPECRON="$(realpath -e "$TEST_HOME/../chapecron")"
+declare -r CHAPECRON="$(readlink -e "$TEST_HOME/../chapecron")"
 
 source ./lib/sharness/sharness.sh
 

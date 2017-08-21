@@ -12,7 +12,7 @@ DEPENDENCY=$1
 REPOSITORY=$2
 VERSION=$3
 
-LIB_DIR=$(realpath "$(dirname $0)")/lib
+LIB_DIR=$(readlink -f "$(dirname $0)")/lib
 
 # Ensure LIB_DIR exists
 mkdir -p "$LIB_DIR" || die "Could not create $LIB_DIR"
