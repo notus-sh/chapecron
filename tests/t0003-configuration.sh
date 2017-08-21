@@ -41,19 +41,19 @@ test_expect_success "$DESC" '
 DESC="Load the correct configuration from a file"
 test_expect_success "$DESC" '
 	cat > config <<-CONFIG
-		sample-key=user
 		middlewares=chapecron::log chapecron::time
+		sample-key=user
 	CONFIG
 
 	cat > expected <<-EXPECTED
-		-- Configuration loaded --
-		sample-key = user
 		middlewares = chapecron::log chapecron::time
-		-- Configuration ends --
+		sample-key = user
 	EXPECTED
 
 	"$CHAPECRON" -vvc config -- date | \
-		sed -e "/^-- Configuration loaded --/,/^-- Configuration ends --/!d" > output
+		sed -e "/^-- Configuration loaded --/,/^-- Configuration ends --/!d" | \
+		grep -v "Configuration" | \
+		sort > output
 	test_cmp output expected
 '
 
@@ -100,14 +100,14 @@ test_expect_success "$DESC" '
 	SYS_CONFIG
 
 	cat > expected <<-EXPECTED
-		-- Configuration loaded --
-		sample-key = user
 		middlewares = chapecron::time chapecron::log
-		-- Configuration ends --
+		sample-key = user
 	EXPECTED
 
 	CHAPECRON_PATH_PREFIX="$test_root" "$CHAPECRON" -vv -- date | \
-		sed -e "/^-- Configuration loaded --/,/^-- Configuration ends --/!d" > output
+		sed -e "/^-- Configuration loaded --/,/^-- Configuration ends --/!d" | \
+		grep -v "Configuration" | \
+		sort > output
 	test_cmp output expected
 '
 
