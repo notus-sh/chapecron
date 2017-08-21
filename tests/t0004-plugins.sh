@@ -73,13 +73,13 @@ test_expect_success "$DESC" "
 		= recall = 1
 		= verbose = 2
 		= -- Command line options ends --
-		= -- Configuration loaded --
-		= middlewares = chapecron::stursky
-		= -- Configuration ends --
 		= -- Middlewares available --
 		= chapecron::hatch
 		= chapecron::stursky
 		= -- Middlewares ends --
+		= -- Configuration loaded --
+		= middlewares = chapecron::stursky
+		= -- Configuration ends --
 		= -- Stack build --
 		= chapecron::mktmp
 		= chapecron::capture

@@ -263,6 +263,16 @@ config::defaults() {
 	CONFIG=( ["middlewares"]="" )
 }
 
+config::check() {
+	if [ -n "${CONFIG['middlewares']}" ]; then
+		for middleware in $(echo "${CONFIG['middlewares']}" | tr " " "\\n"); do
+			if ( ! array::search "$middleware" "${AVAILABLE_MIDDLEWARES[@]}"); then
+				utils::fail $EX_CONFIG "Unknown middleware: $middleware"
+			fi
+		done
+	fi
+}
+
 config::loadfile() {
 	local to_load=$1 tmp_conf name value
 
@@ -295,7 +305,6 @@ config::loadfile() {
 }
 
 config::load() {
-
 	config::defaults
 
 	if [ -n "$CONFIG_FILE" ]; then
@@ -316,6 +325,8 @@ config::load() {
 			fi
 		done
 	fi
+
+	config::check
 }
 
 
@@ -384,10 +395,6 @@ stack::build() {
 
 	if [ -n "${CONFIG['middlewares']}" ]; then
 		for middleware in $(echo "${CONFIG['middlewares']}" | tr " " "\\n"); do
-			if ( ! array::search "$middleware" "${AVAILABLE_MIDDLEWARES[@]}"); then
-				utils::fail $EX_CONFIG "Unknown middleware: $middleware"
-			fi
-
 			stack::add "$middleware"
 		done
 	fi
@@ -424,8 +431,8 @@ context::export() {
 
 context::rebuild() {
 	chapecron_rebuild__options && unset -f chapecron_rebuild__options
-	chapecron_rebuild__config && unset -f chapecron_rebuild__config
 	plugins::load
+	chapecron_rebuild__config && unset -f chapecron_rebuild__config
 	chapecron_rebuild__stack && unset -f chapecron_rebuild__stack
 }
 
@@ -482,8 +489,8 @@ report::context() {
 	REPORT_INDENT+="= "
 
 	report::options
-	report::config
 	report::middlewares
+	report::config
 	report::stack
 
 	REPORT_INDENT="${REPORT_INDENT%= }"
@@ -568,8 +575,8 @@ options::get $@
 
 if [ $RECALL -eq 0 ]; then
 	report::options
-	config::load			&& report::config
 	plugins::load			&& report::middlewares
+	config::load			&& report::config
 	stack::build			&& report::stack
 else
 	context::rebuild	&& report::context
