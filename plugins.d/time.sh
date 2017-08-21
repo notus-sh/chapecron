@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 chapecron::time() {
-	[ -e "/usr/bin/time" ] || \
+	/usr/bin/env time --help > /dev/null || \
 		utils::fail $EX_UNAVAILABLE \
 								"Missing dependency: time"
 
@@ -17,6 +17,6 @@ chapecron::time() {
 	local path="${CONFIG['time.path']}"
 
 	context::export
-	/usr/bin/time --format="$format" -ao "$path" -- "$CHAPECRON_BIN" -r
+	/usr/bin/env time --format="$format" -ao "$path" -- "$CHAPECRON_BIN" -r
 	return $?
 }
