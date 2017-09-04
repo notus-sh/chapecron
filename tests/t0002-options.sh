@@ -7,7 +7,19 @@ test_description="Options handling"
 
 DESC="Fail when invoked without a command to monitor"
 test_expect_success "$DESC" '
-	test_expect_code  64 $CHAPECRON 2>/dev/null
+	test_expect_code 64 $CHAPECRON 2>/dev/null
+'
+
+
+DESC="Get the command to be executed from the --exec option"
+test_expect_success "$DESC" '
+	$CHAPECRON -ve "date" | grep "Command to be monitored: date" > /dev/null
+'
+
+
+DESC="Consider everything after -- as the command to be executed when not invoked with --exec"
+test_expect_success "$DESC" '
+	$CHAPECRON -v -- date | grep "Command to be monitored: date" > /dev/null
 '
 
 
@@ -19,8 +31,8 @@ test_expect_success "$DESC" '
 
 DESC="Output help when invoked with -h or --help"
 test_expect_success "$DESC" '
-	$CHAPECRON -h | grep "Usage: chapecron" > /dev/null && \
-	$CHAPECRON --help | grep "Usage: chapecron" > /dev/null
+	$CHAPECRON -h | grep "Usage:" > /dev/null && \
+	$CHAPECRON --help | grep "Usage:" > /dev/null
 '
 
 
