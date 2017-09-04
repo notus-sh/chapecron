@@ -27,6 +27,7 @@ declare -r EX_UNAVAILABLE=69		# Unavailable dependency
 declare -r EX_OSFILE=72					# Configuration file missing or wrong
 declare -r EX_NOPERM=77					# Insufficient permissions
 declare -r EX_CONFIG=78					# Missing or wrong configuration
+declare -r EX_TEMPFAIL=75				# Temporary failure
 
 ## Command line arguments
 declare COMMAND=''

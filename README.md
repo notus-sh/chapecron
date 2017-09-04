@@ -110,12 +110,14 @@ Only one instance of a each declared middleware will be added to the stack.
 
 * `chapecron::log`  
   Want to cron a script that output important status informations but neither want to read them every morning nor to feed /dev/null with them? This plugin will copy the standard output of your script to a designated log file.
+* `chapecron::nice`  
+  Run your scripts with a niceness adjustment
 * `chapecron::time`  
   Keep trace of your scripts' CPU and memory usage or anything that can be mesured by [GNU time](https://www.gnu.org/software/time/)
 * `chapecron::timeout`  
   Ensure your scripts will not run forever
-* `chapecron::nice`  
-  Run your scripts with a niceness adjustment
+* `chapecron::unique`  
+  Ensure that no more than one instance of a script will run at the same time
 
 ### Write your own
 
