@@ -152,9 +152,12 @@ options::usage() {
 	options::version
 	echo
 	cat <<-USAGE
-		Usage: chapecron [-v,--verbose] [--version] [-h,--help] [-c,--config CONFIG_FILE] -- COMMAND
+		Usage:
+		  chapecron [-v,--verbose] [--version] [-h,--help] [-c,--config CONFIG_FILE] [ -e,--exec "COMMAND [ARG]..." ]
+		  chapecron [-v,--verbose] [--version] [-h,--help] [-c,--config CONFIG_FILE] -- [ COMMAND [ARG]... ]
 		Options:
 		  -c,--config   Specify a configuration file (See below)
+		  -e,--exec     The command to be executed
 		  -version      Print version informations and exit
 		  -h,--help     Print this help and exit
 		  -v,--verbose  More verbose output.
@@ -174,8 +177,8 @@ options::usage() {
 options::get() {
 	local parsed
 
-	parsed=$(getopt --options=hvc:r \
-									--longoptions=help,verbose,config:,version \
+	parsed=$(getopt --options=hvc:e:r \
+									--longoptions=help,verbose,config:,exec:,version \
 									--name "$0" \
 									-- "$@")
 	eval set -- "$parsed"
@@ -188,6 +191,10 @@ options::get() {
 				;;
 			-c|--config)
 				CONFIG_FILE=$2
+				shift 2
+				;;
+			-e|--exec)
+				COMMAND=$2
 				shift 2
 				;;
 			-v|--verbose)
@@ -217,7 +224,7 @@ options::get() {
 	[ $VERSION -eq 1 ] && options::version && exit 0
 	[ $HELP -eq 1 ] && options::usage && exit 0
 
-	COMMAND=$(string::trim "$*")
+	[ -z "$COMMAND" ] && COMMAND=$(string::trim "$*")
 
 	[ -z "$COMMAND" ] && \
 		utils::fail $EX_USAGE \
