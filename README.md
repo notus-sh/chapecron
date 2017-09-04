@@ -61,14 +61,15 @@ LIBDIR    default: $(DESTDIR)$(PREFIX)/lib/chapecron
 chapecron OPTIONS -- COMMAND
 ```
 
-Note that the `--` is **required**.
+If you want to pass `COMMAND` as anything that appears on the command line after the options, please note that the `--` is **required**. Alternatively, you can use the `-e` or `--exec` option.
 
 Supported options:
 
-* `-c` or `--config`: Specify a configuration file (See Configuration below)
-* `--version`: Display version informations and exit
-* `-h` or `--help`: Display usage instructions and exit
-* `-v` or `--verbose`: Increase verbosity. Can be used up to two times
+* `-c` or `--config`: Specify a configuration file (See Configuration below).
+* `-e` or `--exec`: Specify the command to execute. This alternative can be usefull if you want to redirect chapecron output or send it to the background.
+* `-h` or `--help`: Display usage instructions and exit.
+* `-v` or `--verbose`: Increase verbosity. Can be used up to two times.
+* `--version`: Display version informations and exit.
 
 As the whole point of `chapecron` is to be a silent supervisor for your cron jobs, verbosity options only exists to ease debugging a configuration.
 
