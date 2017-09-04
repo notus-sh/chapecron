@@ -14,7 +14,7 @@ chapecron::nice() {
 	exit_code=$?
 
 	if [ $exit_code -ge 125 ] && [ $exit_code -le 127 ]; then
-		utils::error "Unable to invoke the next middleware with nice ($exit_code)"
+		log::error "Unable to invoke the next middleware with nice ($exit_code)"
 	fi
 
 	return $exit_code

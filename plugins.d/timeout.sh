@@ -15,7 +15,7 @@ chapecron::timeout() {
 	exit_code=$?
 
 	if [ $exit_code = 124 ]; then
-		utils::error "Command has been killed by timeout"
+		log::error "Command has been killed by timeout"
 	fi
 	return $exit_code
 }
