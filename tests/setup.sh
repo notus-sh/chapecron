@@ -7,7 +7,7 @@
 #
 
 # We must be called from tests/
-cd "$(dirname "$0")"
+cd "$(dirname $(dirname "$0"))"
 declare -r TEST_HOME="$(pwd)"
 
 if (! readlink -e "$TEST_HOME/../chapecron" > /dev/null); then
@@ -16,9 +16,12 @@ if (! readlink -e "$TEST_HOME/../chapecron" > /dev/null); then
 fi
 declare -r CHAPECRON="$(readlink -e "$TEST_HOME/../chapecron")"
 
-source ./lib/sharness/sharness.sh
-
+# Set Sharness test dir to tests/
+declare -r SHARNESS_TEST_SRCDIR="$TEST_HOME"
 # Configure test_cmp() to ignore trailing whitespaces
 declare -r TEST_CMP="diff -Zu"
+
+source ./lib/sharness/sharness.sh
+
 
 declare DESC

@@ -12,7 +12,7 @@ SHELLMOCK_REPOSITORY  = https://github.com/capitalone/bash_shell_mock.git
 SHELLMOCK_REVISION    = 8fd1b4b21e5f3f323b1664f658dc7e085095adb8
 
 
-TEST_SUITE = $(sort $(wildcard t[0-9][0-9][0-9][0-9]-*.sh))
+TEST_SUITE = $(sort $(wildcard t[0-9]-*/t[0-9][0-9][0-9][0-9]-*.sh))
 
 
 all: aggregate
@@ -40,4 +40,3 @@ shellmock:
 	./install-dep.sh shellmock $(SHELLMOCK_REPOSITORY) $(SHELLMOCK_REVISION)
 
 .PHONY: all clean-test-results $(TEST_SUITE) aggregate deps sharness shellmock
-
