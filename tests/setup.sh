@@ -7,8 +7,8 @@
 #
 
 # We must be called from tests/
-cd "$(dirname $(dirname "$0"))"
-declare -r TEST_HOME="$(pwd)"
+cd "$(dirname "${BASH_SOURCE[0]}")"
+declare -r TEST_HOME="$(pwd -P)"
 
 if (! readlink -e "$TEST_HOME/../chapecron" > /dev/null); then
 	echo "Could not find chapecron" >&2
