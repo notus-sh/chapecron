@@ -18,6 +18,7 @@ test_expect_success "$DESC" "
 	test_expect_code 1 array::search year daily weekly monthly yearly
 "
 
+
 DESC="Merge two or more arrays with array::merge"
 test_expect_success "$DESC" "
 	array::merge 'apple banana orange' 'banana grape' > output

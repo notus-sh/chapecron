@@ -125,13 +125,10 @@ string::trim() {
 # Array functions
 #
 array::search() {
-	local needle=$1 value
+	local needle=$1
 	shift
 
-	eval set -- $@
-	for value in $@; do
-		[ "$value" == "$needle" ] && return 0
-	done
+	[[ " $@ " == *" $needle "* ]] && return 0
 	return 1
 }
 
