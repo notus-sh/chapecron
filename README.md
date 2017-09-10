@@ -109,6 +109,8 @@ Only one instance of a each declared middleware will be added to the stack.
 
 ### Available plugins
 
+* `chapecron::env`  
+  Load an environment file before executing your script (e.g. to define database credentials).
 * `chapecron::log`  
   Want to cron a script that output important status informations but neither want to read them every morning nor to feed /dev/null with them? This plugin will copy the standard output of your script to a designated log file.
 * `chapecron::nice`  
