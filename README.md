@@ -66,12 +66,16 @@ If you want to pass `COMMAND` as anything that appears on the command line after
 Supported options:
 
 * `-c` or `--config`: Specify a configuration file (See Configuration below).
-* `-e` or `--exec`: Specify the command to execute. This alternative can be usefull if you want to redirect chapecron output or send it to the background.
+* `-e` or `--exec`: Specify the command to execute.
+  This alternative can be usefull if you want to redirect chapecron output or send it to the background.
+
+As the whole point of `chapecron` is to be a silent supervisor for your cron jobs, these should be the only options you use in your crontabs but some more are supported for convenience :
+
 * `-h` or `--help`: Display usage instructions and exit.
-* `-v` or `--verbose`: Increase verbosity. Can be used up to two times.
+* `-v` or `--verbose`: Increase verbosity.
+  Can be used up to two times. Can help you to debug a configuration.
 * `--version`: Display version informations and exit.
 
-As the whole point of `chapecron` is to be a silent supervisor for your cron jobs, verbosity options only exists to ease debugging a configuration.
 
 ### Examples
 
