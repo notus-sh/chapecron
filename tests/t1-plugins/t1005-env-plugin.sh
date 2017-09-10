@@ -59,26 +59,4 @@ test_expect_success "$DESC" '
 	test_expect_code 78 "$CHAPECRON" -c config -e "kernelname"
 '
 
-
-DESC="Load system and/or user configuration when invoked without options"
-test_expect_success "$DESC" '
-	local -r test_root="$SHARNESS_TRASH_DIRECTORY"
-	local -r sys_config="$test_root/etc/chapecron/chapecron.conf"
-	local -r usr_config="$test_root/home/$(whoami)/.config/chapecron/chapecron.conf"
-
-	cat > expected <<-EXPECTED
-		Loading configuration from file $sys_config
-		Loading configuration from file $usr_config
-	EXPECTED
-
-	mkdir -p "$(dirname "$sys_config")"
-	mkdir -p "$(dirname "$usr_config")"
-	touch "$sys_config"
-	touch "$usr_config"
-
-	CHAPECRON_PATH_PREFIX="$test_root" "$CHAPECRON" -vv -- date | \
-		grep -e "Loading configuration from file" > output
-	test_cmp output expected
-'
-
 test_done
