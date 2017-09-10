@@ -1,8 +1,28 @@
 #!/usr/bin/env bash
 
-# Environment variables
+# chapecron - Look after your crons while you are away
+# ====================================================
+#
+# See https://github.com/notus-sh/chapecron for a complete documentation on how
+# to use this software.
+#
+#
+# Parts of these sources are documented and marqued as "Public:". These functions
+# and variables can be used by developpers who want to write their own middlewares
+# for chapecron.
+#
+# Public functions and variables are guaranted to not change between minor
+# releases of chapecron but may evolve from one major release to another.
+
+
+##
+## Environment variables
+##
+
+# Public: Enable Bash debug mode
 : ${CHAPECRON_DEBUG:=0}
-# These three ones exists only for tests purpose
+
+# These ones exists only for tests purpose
 : ${CHAPECRON_PATH_PREFIX:=}
 : ${CHAPECRON_PLUGIN_PATTERN:='/*.sh'}
 : ${CHAPECRON_BASH_VERSION:=${BASH_VERSINFO[0]}}
@@ -11,22 +31,29 @@
 ##
 ## Global variables
 ##
+
+# Public: Current version of chapecron.
 declare -r CHAPECRON_VERSION="1.0.0"
 
+# Public: Complete location of the chapecron script, once every symlinks resolved.
 declare -r CHAPECRON_BIN="$(readlink -f "${BASH_SOURCE[0]}")"
+# Public: Path to the parent directory of the chapecron script.
 declare -r CHAPECRON_DIR="$(dirname "$CHAPECRON_BIN")"
 
 ## Exit statuses
 # See https://goo.gl/6uEMX3 for full reference
-declare -r EX_USAGE=64					# Command used incorrectly
-declare -r EX_UNAVAILABLE=69		# Unavailable dependency
-declare -r EX_OSFILE=72					# Configuration file missing or wrong
-declare -r EX_NOPERM=77					# Insufficient permissions
-declare -r EX_CONFIG=78					# Missing or wrong configuration
-declare -r EX_TEMPFAIL=75				# Temporary failure
+declare -r EX_USAGE=64					# Public: Exit code - Command used incorrectly
+declare -r EX_UNAVAILABLE=69		# Public: Exit code - Unavailable dependency
+declare -r EX_OSFILE=72					# Public: Exit code - Configuration file missing or wrong
+declare -r EX_NOPERM=77					# Public: Exit code - Insufficient permissions
+declare -r EX_CONFIG=78					# Public: Exit code - Missing or wrong configuration
+declare -r EX_TEMPFAIL=75				# Public: Exit code - Temporary failure
 
 ## Command line arguments
+
+# Public: The command to be chaperoned
 declare COMMAND=''
+
 # Default options
 declare CONFIG_FILE=''
 # Default flags
@@ -36,9 +63,17 @@ declare -i VERSION=0
 declare -i HELP=0
 
 
+##
+## Utilities
+##
+
+# Public: Ends the program with the specified exit code and an optional error
+# message.
 #
-# Utilities
+# $1 - Exit code. See the defined EX_* global variables.
+# $2 - (Optional) Message. Will be logged with the 'error' level.
 #
+# Returns nothing.
 utils::fail() {
 	local exit_code=$1
 	shift
@@ -47,11 +82,17 @@ utils::fail() {
 	exit $exit_code
 }
 
+# Public: Output the first available file descriptor between 3 and 33.
+#
+# Returns nothing.
 utils::fd() {
 	pattern="^($(ls -Af "/proc/$$/fd" | sed -E 's/[[:space:]]+/\|/g'))$"
 	echo {3..33} | tr ' ' $'\n' | pcregrep -v "$pattern" | head -n 1
 }
 
+# Public: Output the path to the current user home directory.
+#
+# Returns nothing.
 utils::home() {
 	# `$(eval echo "~$(whoami)")` seems to be an overly complicated way
 	# to get $HOME but it prevent any side effect from the current environment.
@@ -60,9 +101,9 @@ utils::home() {
 }
 
 
-#
-# Logging
-#
+##
+## Logging
+##
 declare -i CHAPECRON_OUT_FD=1
 declare -i CHAPECRON_ERR_FD=2
 
@@ -104,22 +145,38 @@ log::print() {
 	eval "echo \"$2\"$redirect"
 }
 
+# Public: Log a message with the `error` level (to the error output).
+#
+# $1.. - Message to be logged
+#
+# Returns nothing.
 log::error() {
 	log::print 0 "$@" "stderr"
 }
 
+# Public: Log a message with the `info` level (to the standard output).
+#
+# $1.. - Message to be logged
+#
+# Returns nothing.
 log::info() {
 	log::print 1 "$@"
 }
 
+# Public: Log a message with the `debug` level (to the standard output).
+#
+# $1.. - Message to be logged
+#
+# Returns nothing.
 log::debug() {
 	log::print 2 "$@"
 }
 
 
-#
-# String functions
-#
+##
+## String functions
+##
+
 string::trim() {
 	local var=$(echo "$*"	| tr "\\n" " ")
 	var="${var#"${var%%[![:space:]]*}"}"
@@ -128,9 +185,10 @@ string::trim() {
 }
 
 
-#
-# Array functions
-#
+##
+## Array functions
+##
+
 array::search() {
 	local needle=$1
 	shift
@@ -154,9 +212,10 @@ array::merge() {
 }
 
 
-#
-# Dependency management
-#
+##
+## Dependency management
+##
+
 dependencies::getopt() {
 	local exit_code
 
@@ -185,9 +244,10 @@ dependencies::all() {
 }
 
 
-#
-# Command line options
-#
+##
+## Command line options
+##
+
 options::version() {
 	cat <<-_EOF
 	chapecron - Look after your crons while you are away
@@ -282,10 +342,15 @@ options::get() {
 }
 
 
-#
-# Configuration
-#
+##
+## Configuration
+##
+
+# Public: Store the loaded configuration as an aliased array.
 declare -A CONFIG=()
+
+# Public: Array of configuration keys that should be merged instead of
+# overwriten when loading more than one configuration file.
 declare -a CONFIG_MERGEABLE
 
 CONFIG_MERGEABLE+=('middlewares')
@@ -383,9 +448,10 @@ config::load() {
 }
 
 
-#
-# Plugins
-#
+##
+## Plugins
+##
+
 declare -a AVAILABLE_MIDDLEWARES
 
 plugins::load() {
@@ -418,9 +484,10 @@ plugins::load() {
 }
 
 
-#
-# Stack management
-#
+##
+## Stack management
+##
+
 declare -a CHAPECRON_STACK=()
 declare -i CHAPECRON_STACK_ITERATOR=0
 
@@ -428,6 +495,9 @@ stack::add() {
 	CHAPECRON_STACK+=("$@")
 }
 
+# Public: Invoke the next middleware in the stack
+#
+# Returns nothing.
 stack::next() {
 	local next=${CHAPECRON_STACK[$CHAPECRON_STACK_ITERATOR]}
 	CHAPECRON_STACK_ITERATOR+=1
@@ -455,9 +525,26 @@ stack::build() {
 }
 
 
+##
+## Execution context
+##
+
+# Public: Export the execution context in the current environment.
 #
-# Execution context
+# Must be called by middlewares before they recall chapecron with `chapecron -r`
+# when `stack::next` can't be used to invoke the next middleware.
 #
+# Most Unix utilities that take a comand as argument (e. g. timeout, nice, etc.)
+# will invoke it in a dedicated subshell. In this context, anything that has not
+# been explicitely exported from the parent environment is lost. Considering
+# chapecron, this means stack definition and progress pointer, configurations and
+# command line options.
+#
+# To work around this limitation, chepcron can be "recalled" from a middleware
+# with `chapecron -r` and this function export the bare minimum it will need to
+# rebuild its own context.
+#
+# Returns nothing.
 context::export() {
 	local options_tpl=$'chapecron_rebuild__options() { COMMAND="%s"; VERBOSE=%i; return 0; }'
 	eval "$(printf "$options_tpl" "$COMMAND" $VERBOSE)"
@@ -489,9 +576,10 @@ context::rebuild() {
 }
 
 
-#
-# Output
-#
+##
+## Output
+##
+
 declare REPORT_INDENT=""
 
 report::options() {
@@ -567,9 +655,10 @@ report::trace() {
 	fi
 }
 
-#
-# Chapecron own middlewares
-#
+##
+## Base middlewares
+##
+
 chapecron::mktmp() {
 	declare -g TMP
 	declare -g OUT
@@ -625,7 +714,7 @@ chapecron::command() {
 # Prevent execution if sourced instead of called
 [ "@$(basename -- "$0")" = "@$(basename -- "$CHAPECRON_BIN")" ] && {
 
-	# Turn unofficial Bash strict mode on
+	# Turn on the unofficial Bash strict mode
 	set -euo pipefail
 	[ $CHAPECRON_DEBUG = 1 ] && set -x
 	IFS=$'\n\t'
@@ -649,4 +738,5 @@ chapecron::command() {
 	exit $?
 }
 
+# Make sure this script ends with code 0 when sourced.
 :
