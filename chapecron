@@ -52,6 +52,13 @@ utils::fd() {
 	echo {3..33} | tr ' ' $'\n' | pcregrep -v "$pattern" | head -n 1
 }
 
+utils::home() {
+	# `$(eval echo "~$(whoami)")` seems to be an overly complicated way
+	# to get $HOME but it prevent any side effect from the current environment.
+	# (e. g. Sharness mess with $HOME)
+	echo "$(eval echo "~$(whoami)")"
+}
+
 
 #
 # Logging
@@ -291,10 +298,8 @@ config::dir() {
 			path="/etc"
 			;;
 		user)
-			# `$(eval echo "~$(whoami)")` seems to be an overly complicated way
-			# to get $HOME but Sharness mess with $HOME
 			path=$(   ([ -z ${XDG_CONFIG_HOME+x} ] || [ -z "$XDG_CONFIG_HOME" ]) \
-							&& echo "$(eval echo "~$(whoami)")/.config" \
+							&& echo "$(utils::home)/.config" \
 							|| echo "$XDG_CONFIG_HOME" \
 						)
 			;;
