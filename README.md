@@ -160,12 +160,6 @@ If you write a usefull plugin, please consider opening a pull request :)
   cronwrap equivalent in Go, with some refinements.
 * [`cronutils`](https://github.com/google/cronutils)  
   Collection of small utilities written in C to assist running batch jobs. Supports timeout, unique jobs and some kind of stats.
-* [`Cronwrap`](http://www.uow.edu.au/~sah/cronwrap.html)  
-  Job wrapper written in C. Supports logging, timeout and custom email formatting.  
-	**Does not seem to be maintained anymore.**
-* [`shush`](http://web.taranis.org/shush/)
-  More complex job wrapper written in C. Supports multiple reports, system logging, timeout, unique jobs and more.  
-	**Does not seem to be maintained anymore.**
 
 ## Acknowledgment
 
