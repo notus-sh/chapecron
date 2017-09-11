@@ -8,16 +8,16 @@
 # Juan Batiz-Benet and Christian Couder.
 #
 
-DEPENDENCY=$1
-REPOSITORY=$2
-VERSION=$3
+DEPENDENCY="$1"
+REPOSITORY="$2"
+VERSION="$3"
 
-LIB_DIR=$(readlink -f "$(dirname $0)")/lib
+VENDOR_DIR="$(dirname "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")")/vendor"
 
 # Ensure LIB_DIR exists
-mkdir -p "$LIB_DIR" || die "Could not create $LIB_DIR"
+mkdir -p "$VENDOR_DIR" || die "Could not create $VENDOR_DIR"
 
-if [ -f "$LIB_DIR/$DEPENDENCY/VERSION_$VERSION" ]; then
+if [ -f "$VENDOR_DIR/$DEPENDENCY/VERSION_$VERSION" ]; then
 	exit 0
 fi
 
@@ -26,15 +26,15 @@ die() {
 	exit 1
 }
 
-if [ -d "$LIB_DIR/$DEPENDENCY/.git" ]; then
+if [ -d "$VENDOR_DIR/$DEPENDENCY/.git" ]; then
 	# Update required
-	cd "$LIB_DIR/$DEPENDENCY" && git fetch -q || die "Could not fetch updates"
+	cd "$VENDOR_DIR/$DEPENDENCY" && git fetch -q || die "Could not fetch updates"
 else
 	# Clone required
-	cd "$LIB_DIR" && git clone -q "$REPOSITORY" "$DEPENDENCY" || die "Could not clone '$REPOSITORY'"
+	cd "$VENDOR_DIR" && git clone -q "$REPOSITORY" "$DEPENDENCY" || die "Could not clone '$REPOSITORY'"
 fi
 
-cd "$LIB_DIR/$DEPENDENCY"  || die "Local version of $REPOSITORY does not exists"
+cd "$VENDOR_DIR/$DEPENDENCY"  || die "Local version of $REPOSITORY does not exists"
 git checkout -q "$VERSION" || die "Could not checkout '$VERSION'"
 rm -f VERSION_*            || die "Could not remove 'VERSION_*'"
 touch "VERSION_$VERSION"   || die "Could not create 'VERSION_$VERSION'"

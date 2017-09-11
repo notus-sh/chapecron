@@ -19,7 +19,7 @@ all: aggregate
 
 aggregate: clean-test-results $(TEST_SUITE)
 	@echo "*** $@ ***"
-	ls test-results/t*-*.sh.*.counts | lib/sharness/aggregate-results.sh
+	ls test-results/t*-*.sh.*.counts | ../vendor/sharness/aggregate-results.sh
 
 $(TEST_SUITE): clean-test-results deps
 	@echo "*** $@ ***"

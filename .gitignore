@@ -1,7 +1,12 @@
-# Dependencies
-/tests/lib/
+## Dependencies
+/vendor/
 
-# Tempfiles
+
+## Tempfiles
+
+# Sharness
 /tests/test-results/
 /tests/trash directory.*.sh/
+
+# Shellmock
 /tests/tmpstubs/
