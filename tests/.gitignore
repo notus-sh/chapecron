@@ -1,7 +1,0 @@
-# Dependencies
-lib/
-
-# Tempfiles
-test-results/
-trash directory.*.sh/
-tmpstubs/
