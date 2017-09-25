@@ -23,22 +23,23 @@
 : ${CHAPECRON_DEBUG:=0}
 
 # These ones exists only for tests purpose
-: ${CHAPECRON_PATH_PREFIX:=}
-: ${CHAPECRON_PLUGIN_PATTERN:='/*.sh'}
 : ${CHAPECRON_BASH_VERSION:=${BASH_VERSINFO[0]}}
+# (And those two are made static on build to prevent bad use)
+: ${CHAPECRON_PATH_PREFIX:=}            # __PKG__ declare -r CHAPECRON_PATH_PREFIX=''
+: ${CHAPECRON_PLUGIN_PATTERN:='/*.sh'}  # __PKG__ declare -r CHAPECRON_PLUGIN_PATTERN='/*.sh'
 
 
 ##
 ## Global variables
 ##
 
-# Public: Current version of chapecron.
-declare -r CHAPECRON_VERSION="1.0.0"
-
 # Public: Complete location of the chapecron script, once every symlinks resolved.
 declare -r CHAPECRON_BIN="$(readlink -f "${BASH_SOURCE[0]}")"
 # Public: Path to the parent directory of the chapecron script.
 declare -r CHAPECRON_DIR="$(dirname "$CHAPECRON_BIN")"
+
+# Public: Current version of chapecron.
+declare -r CHAPECRON_VERSION="$(cat $CHAPECRON_DIR/VERSION)" # __PKG__ declare -r CHAPECRON_VERSION="__VERSION__"
 
 ## Exit statuses
 # See https://goo.gl/6uEMX3 for full reference
