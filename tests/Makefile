@@ -14,29 +14,33 @@ SHELLMOCK_REVISION    = 8fd1b4b21e5f3f323b1664f658dc7e085095adb8
 
 TEST_SUITE = $(sort $(wildcard t[0-9]-*/t[0-9][0-9][0-9][0-9]-*.sh))
 
-
+.PHONY: all
 all: aggregate
 
+.PHONY: aggregate
 aggregate: clean-test-results $(TEST_SUITE)
 	@echo "*** $@ ***"
 	ls test-results/t*-*.sh.*.counts | ../vendor/sharness/aggregate-results.sh
 
+.PHONY: $(TEST_SUITE)
 $(TEST_SUITE): clean-test-results deps
 	@echo "*** $@ ***"
 	@[ $(VERBOSE) ] && ./$@ --verbose || ./$@
 
+.PHONY: clean-test-results
 clean-test-results:
 	@echo "*** $@ ***"
 	-rm -rf test-results
 
+.PHONY: deps
 deps: sharness shellmock
 
+.PHONY: sharness
 sharness:
 	@echo "*** checking $@ ***"
 	./install-dep.sh sharness $(SHARNESS_REPOSITORY) $(SHARNESS_REVISION)
 
+.PHONY: shellmock
 shellmock:
 	@echo "*** checking $@ ***"
 	./install-dep.sh shellmock $(SHELLMOCK_REPOSITORY) $(SHELLMOCK_REVISION)
-
-.PHONY: all clean-test-results $(TEST_SUITE) aggregate deps sharness shellmock
