@@ -1,0 +1,55 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+machines = {
+  deb:    {
+    box: "bento/debian-9",
+    deps: <<-DEPS
+      export DEBIAN_FRONTEND=noninteractive
+      apt-get -qq update > /dev/null
+      apt-get -qq upgrade > /dev/null
+      apt-get -qq install ruby ruby-dev rubygems build-essential > /dev/null
+      unset DEBIAN_FRONTEND
+    DEPS
+  },
+
+  rpm:    {
+    box: "bento/fedora-27",
+    # elfutils-libelf-devel are require to build VirtualBox Guest Additions but not installed
+    deps: <<-DEPS
+      sudo dnf -yq --refresh install elfutils-libelf-devel && \
+      sudo dnf -yq upgrade && \
+      sudo dnf -yq install ruby-devel gcc make rpm-build libffi-devel
+    DEPS
+  },
+
+  pacman: {
+    box: "archlinux/archlinux",
+    deps: <<-DEPS
+      sudo pacman -Syuq --noconfirm gcc make ruby > /dev/null
+    DEPS
+  },
+
+}
+
+# Duplicate the smallest VM to package as tar.
+machines[:tar] = machines[:rpm]
+
+Vagrant.configure('2') do |config|
+
+  config.vm.provider 'virtualbox' do |vb|
+    vb.memory = 4096
+    vb.cpus = 2
+  end
+
+  machines.each do |distro, options|
+    config.vm.define "chapecron-builder-#{distro}" do |machine|
+      machine.vm.box = options[:box]
+      machine.vm.synced_folder "..", "/chapecron"
+      machine.vm.provision "shell", inline: <<-SHELL
+        #{options[:deps]}
+        sudo gem install --quiet --no-user-install --no-ri --no-rdoc fpm > /dev/null
+      SHELL
+    end
+  end
+end

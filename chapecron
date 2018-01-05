@@ -225,6 +225,8 @@ dependencies::getopt() {
 	exit_code=$?
 	set -e
 
+	# Test if getopt is GNU Enhanced getopt, long time provided by util-linux.
+	# See https://stackoverflow.com/a/29754866
 	[ $exit_code -ne 4 ] && return 1
 	return 0
 }

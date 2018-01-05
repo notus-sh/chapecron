@@ -1,3 +1,5 @@
+# Builds
+build/.vagrant/
 /pkg
 
 ## Dependencies

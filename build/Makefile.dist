@@ -16,6 +16,8 @@ install: install-chapecron install-plugins install-config
 install-chapecron:
 	@install -v -m 0755 -d "$(LIBDIR)"
 	@install -v -m 0755 ./chapecron "$(LIBDIR)/chapecron"
+	@install -v -m 0444 ./COPYING "$(LIBDIR)/COPYING"
+	@install -v -m 0444 ./LICENSE "$(LIBDIR)/LICENSE"
 	@install -v -m 0755 -d "$(BINDIR)"
 	@test -s
 	@ln -s "$(LIBDIR)/chapecron" "$(BINDIR)/chapecron"

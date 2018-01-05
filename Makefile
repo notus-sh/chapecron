@@ -1,17 +1,12 @@
-VERSION = $(shell sed -e "s/[[:space:]]//g" < ./VERSION)
-
 .PHONY: test
 test:
 	@cd tests && make
 
 .PHONY: build
-build: build-archive
+build:
+	@cd build && make build
 
-.PHONY: build-archive
-build-archive:
-	@rm -rf pkg/archive && mkdir -p pkg/archive
-	@cp -t pkg/archive/ COPYING LICENSE
-	@cp Makefile.dist pkg/archive/Makefile
-	@mkdir -p pkg/archive/plugins.d
-	@cp plugins.d/*.sh pkg/archive/plugins.d/
-	@sed -e "s/^.*__PKG__ //; s/__VERSION__/$(VERSION)/" chapecron > pkg/archive/chapecron
+.PHONY: install
+install:
+	@cd build && make build-archive
+	@cd pkg/archive && make install
