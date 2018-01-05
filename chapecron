@@ -25,8 +25,8 @@
 # These ones exists only for tests purpose
 : ${CHAPECRON_BASH_VERSION:=${BASH_VERSINFO[0]}}
 # (And those two are made static on build to prevent bad use)
-: ${CHAPECRON_PATH_PREFIX:=}            # __PKG__ declare -r CHAPECRON_PATH_PREFIX=''
-: ${CHAPECRON_PLUGIN_PATTERN:='/*.sh'}  # __PKG__ declare -r CHAPECRON_PLUGIN_PATTERN='/*.sh'
+: ${CHAPECRON_PATH_PREFIX:=}						# __PKG__ declare -r CHAPECRON_PATH_PREFIX=''
+: ${CHAPECRON_PLUGIN_PATTERN:='/*.sh'}	# __PKG__ declare -r CHAPECRON_PLUGIN_PATTERN='/*.sh'
 
 
 ##
@@ -209,7 +209,7 @@ array::merge() {
 		fi
 	done
 
-  echo "${merged[@]}"
+	echo "${merged[@]}"
 }
 
 
@@ -239,7 +239,7 @@ dependencies::all() {
 		utils::fail $EX_UNAVAILABLE \
 								"Missing dependency: enhanced getopt"
 
-	dependencies::bash4  || \
+	dependencies::bash4 || \
 		utils::fail $EX_UNAVAILABLE \
 								"Missing dependency: bash 4.0+"
 }
@@ -474,7 +474,7 @@ plugins::load() {
 									"Plugin $plugin can not be read"
 
 		log::debug "Loading plugin from $plugin"
-	  source "$plugin"
+		source "$plugin"
 	done
 
 	for f in $(declare -F | cut -d ' ' -f3); do
@@ -584,7 +584,7 @@ context::rebuild() {
 declare REPORT_INDENT=""
 
 report::options() {
-	log::info  "${REPORT_INDENT}Command to be monitored: $COMMAND"
+	log::info "${REPORT_INDENT}Command to be monitored: $COMMAND"
 	log::debug "${REPORT_INDENT}-- Command line options detected --"
 	if [ $RECALL -eq 0 ]; then
 		log::debug "${REPORT_INDENT}config file = ${CONFIG_FILE:-undefined}"
