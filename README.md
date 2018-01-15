@@ -35,6 +35,7 @@ What makes `chapecron` different is an extensible set of pluggable middlewares t
 
 ```
 git clone https://github.com/notus-sh/chapecron.git chapecron && cd chapecron
+make
 make install
 ```
 

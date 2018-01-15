@@ -1,3 +1,4 @@
+
 .PHONY: test
 test:
 	@cd tests && make
@@ -6,7 +7,12 @@ test:
 build:
 	@cd build && make build
 
+
+.DEFAULT_GOAL := build-archive
+.PHONY: build-archive
+build-archive:
+	@cd build && make build-archive
+
 .PHONY: install
 install:
-	@cd build && make build-archive
 	@cd pkg/archive && make install
