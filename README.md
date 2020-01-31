@@ -74,7 +74,7 @@ sudo apt-get update
 sudo apt-get install -y chapecron
 ```
 
-**(*)** The repository and its content are signed with the [Bintray](https://bintray.com) public GPG key. It will be replaced with our own GPG key in a near future.
+**(*)** The repository and its content are signed with the [Bintray](https://bintray.com) public GPG key. It will be replaced with our own GPG key in a near future.  
 If you don't trust Bintray or don't want to add their public key, you can [download the `.deb` package from their web UI](https://bintray.com/notus-sh/oss-debian/chapecron).
 
 ## Usage
