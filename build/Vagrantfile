@@ -3,7 +3,7 @@
 
 machines = {
   deb:    {
-    box: "bento/debian-9",
+    box: "bento/debian-10",
     deps: <<-DEPS
       export DEBIAN_FRONTEND=noninteractive
       apt-get -qq update > /dev/null
@@ -14,7 +14,7 @@ machines = {
   },
 
   rpm:    {
-    box: "bento/fedora-27",
+    box: "bento/fedora-latest",
     # elfutils-libelf-devel are require to build VirtualBox Guest Additions but not installed
     deps: <<-DEPS
       sudo dnf -yq --refresh install elfutils-libelf-devel && \
