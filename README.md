@@ -55,6 +55,27 @@ BINDIR    default: $(DESTDIR)$(PREFIX)/bin
 LIBDIR    default: $(DESTDIR)$(PREFIX)/lib/chapecron
 ```
 
+### Official packages
+
+`chapecron` is also available as a `.deb` package for Debian and derivatives.
+_(More distributions will come soon…)_
+
+#### Debian
+
+```
+# Trust Bintray public GPG key (*)
+wget -O- "https://bintray.com/user/downloadSubjectPublicKey?username=bintray" | sudo apt-key add -
+
+# Add our APT repository
+sudo sh -c 'echo deb https://dl.bintray.com/notus-sh/oss-debian buster main > /etc/apt/sources.list.d/notus.sh.list'
+sudo apt-get update
+
+# Install chapecron
+sudo apt-get install -y chapecron
+```
+
+**(*)** The repository and its content are signed with the [Bintray](https://bintray.com) public GPG key. It will be replaced with our own GPG key in a near future.
+If you don't trust Bintray or don't want to add their public key, you can [download the `.deb` package from their web UI](https://bintray.com/notus-sh/oss-debian/chapecron).
 
 ## Usage
 
