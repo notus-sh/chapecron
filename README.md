@@ -10,7 +10,7 @@ Cron automatically emails the output of a cron job to the user, to warn him when
 As usefull as it sounds, cron considers any output as an error and it can be difficult to write cron jobs that output nothing but real errors.
 It also ignores command result codes, so a quiet programs can fail without being noticed.
 
-To not be bothered by tons of useless emails, most people do things like this:
+To not be bothered by tons of useless emails, most people do things like this:  
 _(or don't configure anything else than the default local mailboxes)_
 
 ```
@@ -113,17 +113,17 @@ Only one instance of a each declared middleware will be added to the stack.
 
 ### Available plugins
 
-* `chapecron::env`
+* `chapecron::env`  
   Load an environment file before executing your script (e.g. to define database credentials).
-* `chapecron::log`
+* `chapecron::log`  
   Want to cron a script that output important status informations but neither want to read them every morning nor to feed /dev/null with them? This plugin will copy the standard output of your script to a designated log file.
-* `chapecron::nice`
+* `chapecron::nice`  
   Run your scripts with a niceness adjustment
-* `chapecron::time`
+* `chapecron::time`  
   Keep trace of your scripts' CPU and memory usage or anything that can be mesured by [GNU time](https://www.gnu.org/software/time/)
-* `chapecron::timeout`
+* `chapecron::timeout`  
   Ensure your scripts will not run forever
-* `chapecron::unique`
+* `chapecron::unique`  
   Ensure that no more than one instance of a script will run at the same time
 
 ### Write your own
@@ -147,18 +147,18 @@ That means you can't use the `stack::next` function as the newly created shell w
 To work around this, you can call `context::export` in your middleware function and replace the `stack::next` call by `chapecron -r`.
 This way, `chapecron` will reinvoke itself and be able to restore the saved context and continue its job.
 
-Have a look at the sources of existing plugins for more examples.
+Have a look at the sources of existing plugins for more examples.  
 If you write a usefull plugin, please consider opening a pull request :)
 
 ## Alternatives
 
-* [`cronic`](http://habilis.net/cronic/)
+* [`cronic`](http://habilis.net/cronic/)  
   Simple and lightweight Bash wrapper to keep your cron jobs quiet between two failures.
-* [`cronwrap`](https://github.com/Doist/cronwrap)
+* [`cronwrap`](https://github.com/Doist/cronwrap)  
   Cron wrapper written in Python. Supports timeout and custom email recipients.
-* [`croncape`](https://github.com/sensiocloud/croncape)
+* [`croncape`](https://github.com/sensiocloud/croncape)  
   cronwrap equivalent in Go, with some refinements.
-* [`cronutils`](https://github.com/google/cronutils)
+* [`cronutils`](https://github.com/google/cronutils)  
   Collection of small utilities written in C to assist running batch jobs. Supports timeout, unique jobs and some kind of stats.
 
 ## Acknowledgment
