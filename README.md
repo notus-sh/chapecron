@@ -1,6 +1,6 @@
 # Chapecron
 
-[![Build Status](https://travis-ci.org/notus-sh/chapecron.svg?branch=master)](https://travis-ci.org/notus-sh/chapecron)
+[![Unit tests](https://github.com/notus-sh/chapecron/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/notus-sh/chapecron/actions/workflows/unit-tests.yml)
 
 `chapecron` is a shell script to help control and monitor cron jobs.
 

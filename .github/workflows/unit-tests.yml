@@ -1,0 +1,23 @@
+name: Unit tests
+on:
+  push:
+    branches: [main, next]
+  pull_request:
+    branches:  [main, next]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      VERBOSE: 1
+      DEBIAN_FRONTEND: noninteractive
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Install dependencies
+        # time: chapecron dependency to use the time middleware
+        # git: test dependencies installation
+        # pcregrep: complex pattern matching in tests
+        run: sudo apt-get --yes install time git pcregrep
+        shell: bash
+      - name: Run tests
+        run: make test
