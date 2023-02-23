@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VERBOSE: 1
+      DEBIAN_FRONTEND: noninteractive
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -16,7 +17,7 @@ jobs:
         # time: chapecron dependency to use the time middleware
         # git: test dependencies installation
         # pcregrep: complex pattern matching in tests
-        run: apt-get install time git pcregrep
+        run: sudo apt-get --yes install time git pcregrep
         shell: bash
       - name: Run tests
         run: make test
